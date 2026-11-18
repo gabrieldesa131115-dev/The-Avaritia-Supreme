@@ -130,3 +130,33 @@ public class VisualEAdaptacao {
     }
                 }
 
+        // Aura Arco-Íris Exclusiva nos quadradinhos do inventário dos itens Irrelevantes
+        @SubscribeEvent
+        public static void onRenderSlot(net.minecraftforge.client.event.ContainerScreenEvent.Render.Foreground event) {
+            net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen = event.getContainerScreen();
+            long t = System.currentTimeMillis() / 10L;
+            for (net.minecraft.world.inventory.Slot slot : screen.getMenu().slots) {
+                if (slot.hasItem() && ehIrrelevante(slot.getItem().getItem())) {
+                    int cor1 = java.awt.Color.HSBtoRGB(((t + slot.index * 15) % 360) / 360.0F, 1.0F, 1.0F);
+                    int cor2 = java.awt.Color.HSBtoRGB(((t + slot.index * 15 + 120) % 360) / 360.0F, 1.0F, 1.0F);
+                    event.getGuiGraphics().fillGradient(slot.x, slot.y, slot.x + 16, slot.y + 16, (cor1 & 0x00FFFFFF) | 0x55000000, (cor2 & 0x00FFFFFF) | 0x55000000);
+                }
+            }
+        }
+
+        // Aura de Partículas Arco-Íris ao segurar qualquer item Irrelevante na mão
+        @SubscribeEvent
+        public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && mc.player != null && mc.level != null) {
+                Item mao = mc.player.getMainHandItem().getItem();
+                if (ehIrrelevante(mao)) {
+                    float hue = ((System.currentTimeMillis() / 8L) % 360) / 360.0F;
+                    int rgb = java.awt.Color.HSBtoRGB(hue, 1.0F, 1.0F);
+                    org.joml.Vector3f cor = new org.joml.Vector3f(((rgb >> 16) & 255) / 255.0F, ((rgb >> 8) & 255) / 255.0F, (rgb & 255) / 255.0F);
+                    double ang = (mc.player.tickCount * 0.4D);
+                    mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(cor, 1.3F),
+                            mc.player.getX() + Math.cos(ang) * 0.8D, mc.player.getY() + 1.1D, mc.player.getZ() + Math.sin(ang) * 0.8D, 0, 0.03, 0);
+                }
+            }
+        }
