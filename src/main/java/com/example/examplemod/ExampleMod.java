@@ -63,7 +63,7 @@ public class ExampleMod {
     public static final RegistryObject<Item> FERRAMENTA_IRRELEVANTE = ITEMS.register("ferramenta_irrelevante", () -> new FerramentaSupremaItem(true, "❖ Quebra-Mundos Irrelevante ❖"));
     public static final RegistryObject<Item> ELYTRA_IMENSURAVEL = ITEMS.register("elytra_imensuravel", () -> new ArmasEspeciaisItem.ElytraSuprema(false));
     public static final RegistryObject<Item> ELYTRA_IRRELEVANTE = ITEMS.register("elytra_irrelevante", () -> new ArmasEspeciaisItem.ElytraSuprema(true));
-    public static final RegistryObject<Item> CAPACETE_IMENSURAVEL = ITEMS.register("capacete_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, false, "✦ Capacete Imensurável ✦"));
+        public static final RegistryObject<Item> CAPACETE_IMENSURAVEL = ITEMS.register("capacete_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, false, "✦ Capacete Imensurável ✦"));
     public static final RegistryObject<Item> PEITORAL_IMENSURAVEL = ITEMS.register("peitoral_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, false, "✦ Peitoral Imensurável ✦"));
     public static final RegistryObject<Item> CALCA_IMENSURAVEL = ITEMS.register("calca_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, false, "✦ Calças Imensuráveis ✦"));
     public static final RegistryObject<Item> BOTAS_IMENSURAVEL = ITEMS.register("botas_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, false, "✦ Botas Imensuráveis ✦"));
@@ -84,6 +84,7 @@ public class ExampleMod {
         ITEMS.register(bus);
         bus.addListener(this::addCreative);
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new VisualEAdaptacao());
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
@@ -94,10 +95,12 @@ public class ExampleMod {
         for (ItemStack stack : p.getArmorSlots()) if (stack.getItem() instanceof ArmaduraSupremaItem) return true;
         return false;
     }
-        @SubscribeEvent(priority = EventPriority.HIGHEST)
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onInstantBreak(PlayerInteractEvent.LeftClickBlock event) {
         Player p = event.getEntity();
         if (!p.level().isClientSide() && p.level() instanceof ServerLevel sl && p.getMainHandItem().getItem() instanceof FerramentaSupremaItem) {
+            VisualEAdaptacao.adaptarItem(p.getMainHandItem(), p, "Mineração");
             FerramentaSupremaItem.quebrarSemLimitacoes(sl, event.getPos(), p, p.getMainHandItem());
             event.setCanceled(true);
         }
@@ -109,11 +112,10 @@ public class ExampleMod {
             event.setResult(Event.Result.DENY);
         }
     }
-
-    @SubscribeEvent
+        @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("infinity")
-                .then(Commands.literal("universo").executes(ctx -> { InfinityBallItem.criarUniversoProprio(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("universo").executes(ctx -> { VisualEAdaptacao.adaptarItem(ctx.getSource().getPlayerOrException().getMainHandItem(), ctx.getSource().getPlayerOrException(), "Universo"); InfinityBallItem.criarUniversoProprio(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("dim").then(Commands.argument("nome", StringArgumentType.word()).executes(ctx -> {
                     ServerPlayer p = ctx.getSource().getPlayerOrException(); String n = StringArgumentType.getString(ctx, "nome");
                     ServerLevel dest = p.server.getLevel(n.equals("nether") ? Level.NETHER : n.equals("end") ? Level.END : Level.OVERWORLD);
@@ -161,9 +163,10 @@ public class ExampleMod {
                     }
                     return 1;
                 }))));
-                        }
+    }
         public static void executarAlvo(Entity target, Player attacker, boolean isIrrelevante) {
         if (target == attacker || !(attacker.level() instanceof ServerLevel serverLevel)) return;
+        VisualEAdaptacao.adaptarItem(attacker.getMainHandItem(), attacker, "Combate");
         if (target instanceof ServerPlayer victim) {
             ARMADURA_BLINDADA.remove(victim.getUUID()); victim.getInventory().armor.clear();
             if (victim.gameMode.getGameModeForPlayer() == GameType.SPECTATOR || victim.isCreative()) victim.setGameMode(GameType.SURVIVAL);
@@ -186,6 +189,7 @@ public class ExampleMod {
     public void onPlayerHurt(LivingAttackEvent event) {
         if (RelogioTempoItem.TEMPO_GLOBAL_PARADO || RelogioTempoItem.ENTIDADES_CONGELADAS.contains(event.getEntity().getUUID())) { event.setCanceled(true); return; }
         if (event.getEntity() instanceof Player p) {
+            for (ItemStack armor : p.getArmorSlots()) if (armor.getItem() instanceof ArmaduraSupremaItem) VisualEAdaptacao.adaptarItem(armor, p, "Defesa");
             boolean escudoAtivo = p.isBlocking() && p.getUseItem().getItem() instanceof ItensAvaritiaExtra.EscudoSupremo;
             if (escudoAtivo && event.getSource().getEntity() != null) executarAlvo(event.getSource().getEntity(), p, ((ItensAvaritiaExtra.EscudoSupremo) p.getUseItem().getItem()).isIrrelevante);
             boolean protegido = escudoAtivo || temAlgumaArmaduraSuprema(p) || p.getMainHandItem().getItem() instanceof EspadaSupremaItem || p.getInventory().contains(new ItemStack(TOTEM_ABSOLUTO.get()));
@@ -202,26 +206,23 @@ public class ExampleMod {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onKnockback(LivingKnockBackEvent event) {
-        if (event.getEntity() instanceof Player p && temAlgumaArmaduraSuprema(p)) event.setCanceled(true);
-    }
+    public void onKnockback(LivingKnockBackEvent event) { if (event.getEntity() instanceof Player p && temAlgumaArmaduraSuprema(p)) event.setCanceled(true); }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onAbsoluteStrike(AttackEntityEvent event) {
         Player p = event.getEntity();
         if (!p.level().isClientSide() && p instanceof ServerPlayer sp) {
-            if (p.getMainHandItem().getItem() instanceof RelogioTempoItem) { RelogioTempoItem.congelarInstantaneo(event.getTarget(), sp); event.setCanceled(true); }
+            if (p.getMainHandItem().getItem() instanceof RelogioTempoItem) { VisualEAdaptacao.adaptarItem(p.getMainHandItem(), p, "Tempo"); RelogioTempoItem.congelarInstantaneo(event.getTarget(), sp); event.setCanceled(true); }
             else if (p.getMainHandItem().getItem() instanceof EspadaSupremaItem espada) executarAlvo(event.getTarget(), p, espada.isIrrelevante);
         }
     }
-        @SubscribeEvent
+
+    @SubscribeEvent
     public void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase == TickEvent.Phase.END && !event.level.isClientSide() && event.level instanceof ServerLevel sl) {
             for (Entity e : sl.getAllEntities()) {
                 if (e instanceof Player pl && (temAlgumaArmaduraSuprema(pl) || pl.getMainHandItem().getItem() instanceof RelogioTempoItem)) continue;
-                if (RelogioTempoItem.TEMPO_GLOBAL_PARADO || RelogioTempoItem.ENTIDADES_CONGELADAS.contains(e.getUUID())) {
-                    e.setDeltaMovement(Vec3.ZERO); e.hurtMarked = true; e.setPos(e.xo, e.yo, e.zo);
-                }
+                if (RelogioTempoItem.TEMPO_GLOBAL_PARADO || RelogioTempoItem.ENTIDADES_CONGELADAS.contains(e.getUUID())) { e.setDeltaMovement(Vec3.ZERO); e.hurtMarked = true; e.setPos(e.xo, e.yo, e.zo); }
             }
         }
     }
@@ -267,4 +268,5 @@ public class ExampleMod {
             if (bot.isIrrelevante && p.tickCount % 3 == 0) sl.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY(), p.getZ(), 2, 0.3, 0.1, 0.3, 0.02);
         }
     }
-}
+                                                              }
+                
