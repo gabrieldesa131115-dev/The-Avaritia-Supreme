@@ -1,1 +1,132 @@
+package com.example.examplemod;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderTooltipEvent;
+import net.minecraftforge.event.ItemAttributeModifierEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+public class VisualEAdaptacao {
+
+    private static final ChatFormatting[] ARCO_IRIS = {
+            ChatFormatting.RED, ChatFormatting.GOLD, ChatFormatting.YELLOW,
+            ChatFormatting.GREEN, ChatFormatting.AQUA, ChatFormatting.LIGHT_PURPLE
+    };
+
+    // Gera texto colorido brilhando e mudando de cor em tempo real
+    public static MutableComponent textoBrilhante(String texto) {
+        MutableComponent comp = Component.empty();
+        long tempo = System.currentTimeMillis() / 120L;
+        for (int i = 0; i < texto.length(); i++) {
+            ChatFormatting cor = ARCO_IRIS[(int) ((tempo + i) % ARCO_IRIS.length)];
+            comp.append(Component.literal(String.valueOf(texto.charAt(i))).withStyle(cor, ChatFormatting.BOLD));
+        }
+        return comp;
+    }
+
+    // Sistema de Adaptação: evolui o item a cada combate, defesa ou mineração
+    public static void adaptarItem(ItemStack stack, Player player, String motivo) {
+        if (stack.isEmpty()) return;
+        int pontos = stack.getOrCreateTag().getInt("PontosAdaptacao") + 1;
+        int nivelAtual = stack.getOrCreateTag().getInt("NivelAdaptacao");
+        stack.getOrCreateTag().putInt("PontosAdaptacao", pontos);
+        int novoNivel = (pontos / 5) + 1;
+        if (novoNivel > nivelAtual) {
+            stack.getOrCreateTag().putInt("NivelAdaptacao", novoNivel);
+            if (player != null && !player.level().isClientSide()) {
+                player.displayClientMessage(textoBrilhante("★ ADAPTAÇÃO EVOLUÍDA! Nível " + novoNivel + " (" + motivo + ") ★"), true);
+            }
+        }
+    }
+
+    public static int getNivelAdaptacao(ItemStack stack) {
+        return Math.max(1, stack.getOrCreateTag().getInt("NivelAdaptacao"));
+    }
+
+    public static boolean ehItemDoMod(Item item) {
+        return item instanceof EspadaSupremaItem || item instanceof ArmaduraSupremaItem
+                || item instanceof FerramentaSupremaItem || item instanceof InfinityBallItem
+                || item instanceof RelogioTempoItem || item instanceof ArmasEspeciaisItem.ElytraSuprema
+                || item instanceof ArmasEspeciaisItem.LancaSuprema || item instanceof ArmasEspeciaisItem.MacaSuprema
+                || item instanceof ArmasEspeciaisItem.TotemSupremo || item instanceof ArcoBestaSupremaItem.ArcoSupremo
+                || item instanceof ArcoBestaSupremaItem.BestaSuprema || item instanceof ItensAvaritiaExtra.EscudoSupremo
+                || item instanceof ItensAvaritiaExtra.ComidaSuprema || item instanceof ItensAvaritiaExtra.MaterialSupremo;
+    }
+
+    public static boolean ehIrrelevante(Item item) {
+        return (item instanceof EspadaSupremaItem e && e.isIrrelevante)
+                || (item instanceof ArmaduraSupremaItem a && a.isIrrelevante)
+                || (item instanceof FerramentaSupremaItem f && f.isIrrelevante)
+                || (item instanceof ArmasEspeciaisItem.ElytraSuprema el && el.isIrrelevante)
+                || (item instanceof ArmasEspeciaisItem.LancaSuprema l && l.isIrrelevante)
+                || (item instanceof ArmasEspeciaisItem.MacaSuprema m && m.isIrrelevante)
+                || (item instanceof ArcoBestaSupremaItem.ArcoSupremo ar && ar.isIrrelevante)
+                || (item instanceof ArcoBestaSupremaItem.BestaSuprema b && b.isIrrelevante)
+                || (item instanceof ItensAvaritiaExtra.EscudoSupremo es && es.isIrrelevante);
+    }
+
+    // Remove os números padrão do Minecraft e coloca textos personalizados coloridos e brilhando!
+    @SubscribeEvent
+    public void onTooltip(net.minecraftforge.event.entity.player.ItemTooltipEvent event) {
+        ItemStack stack = event.getItemStack();
+        Item item = stack.getItem();
+        if (!ehItemDoMod(item)) return;
+
+        boolean irr = ehIrrelevante(item);
+        int adapt = getNivelAdaptacao(stack);
+
+        // Remove linhas numéricas antigas de ataque/armadura/durabilidade
+        event.getToolTip().removeIf(c -> c.getString().contains("99999") || c.getString().contains("100000") || c.getString().contains("Attack Damage") || c.getString().contains("Dano de ataque") || c.getString().contains("Armor") || c.getString().contains("Armadura"));
+
+        event.getToolTip().add(Component.literal("⚡ Adaptação Evolutiva: ").withStyle(ChatFormatting.GRAY)
+                .append(textoBrilhante("Nível " + adapt + " (+" + (adapt * 15) + "% Poder)")));
+
+        if (item instanceof EspadaSupremaItem || item instanceof ArmasEspeciaisItem.LancaSuprema
+                || item instanceof ArmasEspeciaisItem.MacaSuprema || item instanceof ArcoBestaSupremaItem.ArcoSupremo
+                || item instanceof ArcoBestaSupremaItem.BestaSuprema) {
+            event.getToolTip().add(textoBrilhante(irr ? " +Irrelevante Dano de Ataque" : " +Imensurável Dano de Ataque"));
+            event.getToolTip().add(textoBrilhante(" Velocidade de Ataque: Infinita"));
+        } else if (item instanceof ArmaduraSupremaItem || item instanceof ItensAvaritiaExtra.EscudoSupremo || item instanceof ArmasEspeciaisItem.ElytraSuprema) {
+            event.getToolTip().add(textoBrilhante(" +Infinity Armadura"));
+            event.getToolTip().add(textoBrilhante(" Durabilidade: Infinita"));
+        } else if (item instanceof FerramentaSupremaItem) {
+            event.getToolTip().add(textoBrilhante(irr ? " Escavação: Irrelevante (Ápice)" : " Escavação: Imensurável"));
+            event.getToolTip().add(textoBrilhante(" Durabilidade: Infinita"));
+        }
+    }
+
+    @SubscribeEvent
+    public void onAttributes(ItemAttributeModifierEvent event) {
+        if (ehItemDoMod(event.getItemStack().getItem())) {
+            event.clearModifiers(); // Limpa os números verdes padrão do Minecraft
+        }
+    }
+
+    // Fundo colorido e borda brilhante animada em TODOS os itens do mod!
+    @Mod.EventBusSubscriber(modid = ExampleMod.MODID, value = Dist.CLIENT)
+    public static class ClientTooltipColor {
+        @SubscribeEvent
+        public static void onTooltipColor(RenderTooltipEvent.Color event) {
+            Item item = event.getItemStack().getItem();
+            if (!ehItemDoMod(item)) return;
+
+            long t = System.currentTimeMillis() / 15L;
+            int hue = (int) (t % 360);
+            int rgbBorda = java.awt.Color.HSBtoRGB(hue / 360.0F, 0.95F, 1.0F);
+            int rgbBorda2 = java.awt.Color.HSBtoRGB(((hue + 90) % 360) / 360.0F, 0.95F, 1.0F);
+
+            // Fundo cósmico colorido translúcido (Roxo/Azul Galático) em vez de preto!
+            event.setBackgroundStart(0xF01A0836);
+            event.setBackgroundEnd(0xF00B193D);
+            event.setBorderStart(rgbBorda);
+            event.setBorderEnd(rgbBorda2);
+        }
+    }
+                }
 
