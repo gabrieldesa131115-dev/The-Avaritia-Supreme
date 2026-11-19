@@ -270,3 +270,4 @@ public class ExampleMod {
     }
                                                               }
                 
+public static final RegistryObject<Item> ENXADA_IMENSURAVEL = ITEMS.register("enxada_imensuravel", EnxadaSupremaItem::new);
