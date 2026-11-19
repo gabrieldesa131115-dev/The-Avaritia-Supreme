@@ -10,12 +10,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,18 +21,9 @@ import java.util.List;
 public class EspadaSupremaItem extends SwordItem {
     public final boolean isIrrelevante;
 
-    public static final String[] MODOS = {
-            "Onda Expansiva Cósmica",
-            "Cortes Cósmicos à Distância",
-            "Expurgo: Mobs Agressivos",
-            "Expurgo: Mobs Passivos",
-            "Expurgo: Todos os Mobs",
-            "Expurgo: Todos os Jogadores",
-            "ANIQUILAÇÃO TOTAL (Tudo)"
-    };
-
     public EspadaSupremaItem(boolean isIrrelevante) {
-        super(Tiers.NETHERITE, 99999999, isIrrelevante ? -1.0F : -2.0F, new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
+        super(FerramentaSupremaItem.TIER_APICE, isIrrelevante ? 2147483646 : 999999999, 100.0F,
+                new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
         this.isIrrelevante = isIrrelevante;
     }
 
@@ -42,69 +31,54 @@ public class EspadaSupremaItem extends SwordItem {
 
     @Override
     public Component getName(ItemStack stack) {
-        return isIrrelevante
-                ? Component.literal("❖ Espada da Singularidade Irrelevante ❖").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
-                : Component.literal("✦ Espada do Cosmos Imensurável ✦").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        return Component.literal(isIrrelevante ? "❖ Espada do Cosmos Irrelevante ❖" : "✦ Espada do Cosmos Imensurável ✦")
+                .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        int modo = stack.getOrCreateTag().getInt("ModoEspada");
-        tooltip.add(Component.literal("Modo: " + MODOS[modo]).withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
-        tooltip.add(Component.literal("[Shift + Clique Direito] Trocar Modo").withStyle(ChatFormatting.GRAY));
-        if (isIrrelevante) {
-            tooltip.add(Component.literal("+Ø IRRELEVANTE Dano de Ataque").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
-        } else {
-            tooltip.add(Component.literal("+∞ IMENSURÁVEL Dano de Ataque").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+        tooltip.add(Component.literal("• Apaga qualquer criatura, Leviatã ou NPC imortal").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("• [Clique Direito] Expurgo Cósmico em área (30 blocos)").withStyle(ChatFormatting.AQUA));
+    }
+
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+        if (!player.level().isClientSide()) {
+            ExampleMod.executarAlvo(entity, player, this.isIrrelevante);
+            VisualEAdaptacao.adaptarItem(stack, player, "Aniquilação");
         }
+        return true;
+    }
+
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (!attacker.level().isClientSide() && attacker instanceof Player p) {
+            ExampleMod.executarAlvo(target, p, this.isIrrelevante);
+            VisualEAdaptacao.adaptarItem(stack, p, "Aniquilação");
+        }
+        return true;
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-            int modoAtual = stack.getOrCreateTag().getInt("ModoEspada");
-
-            if (player.isShiftKeyDown()) {
-                int proximo = (modoAtual + 1) % MODOS.length;
-                stack.getOrCreateTag().putInt("ModoEspada", proximo);
-                player.displayClientMessage(Component.literal("Modo: " + MODOS[proximo]).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
-                level.playSound(null, player.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.5F);
-                return InteractionResultHolder.success(stack);
+        if (!level.isClientSide() && level instanceof ServerLevel sl) {
+            double raio = isIrrelevante ? 40.0D : 25.0D;
+            AABB area = player.getBoundingBox().inflate(raio);
+            int apagados = 0;
+            for (Entity alvo : sl.getEntities(player, area)) {
+                if (alvo != player && !(alvo instanceof net.minecraft.world.entity.item.ItemEntity)) {
+                    ExampleMod.executarAlvo(alvo, player, this.isIrrelevante);
+                    apagados++;
+                }
             }
-
-            double raio = isIrrelevante ? 80.0 : 35.0;
-            if (modoAtual == 0) {
-                for (double r = 2.0; r <= 8.0; r += 2.0) {
-                    for (int i = 0; i < 24; i++) {
-                        double ang = 2 * Math.PI * i / 24;
-                        serverLevel.sendParticles(ParticleTypes.END_ROD, player.getX() + Math.cos(ang) * r, player.getY() + 0.5, player.getZ() + Math.sin(ang) * r, 1, 0, 0, 0, 0.02);
-                    }
-                }
-                for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(raio))) {
-                    ExampleMod.executarAlvo(e, player, isIrrelevante);
-                }
-            } else if (modoAtual == 1) {
-                Vec3 ini = player.getEyePosition(), dir = player.getLookAngle();
-                for (double d = 1.5; d <= (isIrrelevante ? 120.0 : 50.0); d += 1.5) {
-                    Vec3 p = ini.add(dir.scale(d));
-                    serverLevel.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 2, 0.2, 0.2, 0.2, 0.01);
-                    for (Entity e : level.getEntities(player, new AABB(p.x - 2, p.y - 2, p.z - 2, p.x + 2, p.y + 2, p.z + 2))) {
-                        ExampleMod.executarAlvo(e, player, isIrrelevante);
-                    }
-                }
-            } else {
-                for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(raio))) {
-                    boolean agressivo = e instanceof Mob m && m.getTarget() != null || e instanceof net.minecraft.world.entity.monster.Enemy;
-                    boolean passivo = e instanceof LivingEntity && !(e instanceof Player) && !agressivo;
-                    boolean jogador = e instanceof Player;
-                    if ((modoAtual == 2 && agressivo) || (modoAtual == 3 && passivo) || (modoAtual == 4 && (agressivo || passivo)) || (modoAtual == 5 && jogador) || modoAtual == 6) {
-                        ExampleMod.executarAlvo(e, player, isIrrelevante);
-                    }
-                }
+            sl.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 1.0F, 1.5F);
+            sl.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0, player.getZ(), 40, 2.0, 1.0, 2.0, 0.1);
+            if (apagados > 0) {
+                VisualEAdaptacao.adaptarItem(stack, player, "Expurgo em Área");
+                player.displayClientMessage(Component.literal("⚡ " + apagados + " entidades apagadas da existência!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD), true);
             }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
-          }
-          
+}
