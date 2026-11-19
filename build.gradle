@@ -215,8 +215,8 @@ idea {
 tasks.register('gerarModelosAutomaticos') {
     doLast {
         def dir = file("src/main/resources/assets/examplemod/models/item")
-        dir.mkdirs()
-        def handheld = ["espada_imensuravel", "espada_irrelevante", "lanca_imensuravel", "lanca_irrelevante", "maca_imensuravel", "maca_irrelevante", "ferramenta_imensuravel", "ferramenta_irrelevante"]
+        dir.mkdirs()_
+        def handheld = ["espada_imensuravel", "espada_irrelevante", "lanca_imensuravel", "lanca_irrelevante", "maca_imensuravel", "maca_irrelevante", "ferramenta_imensuravel", "ferramenta_irrelevante", "enxada_imensuravel")
         def generated = ["arco_imensuravel", "arco_irrelevante", "besta_imensuravel", "besta_irrelevante", "escudo_imensuravel", "escudo_irrelevante", "elytra_imensuravel", "elytra_irrelevante", "capacete_imensuravel", "peitoral_imensuravel", "calca_imensuravel", "botas_imensuravel", "capacete_irrelevante", "peitoral_irrelevante", "calca_irrelevante", "botas_irrelevante", "totem_absoluto", "infinity_ball", "relogio_tempo", "ensopado_supremo", "almondega_cosmica", "lingote_infinito", "singularidade_suprema"]
         handheld.each { nome -> new File(dir, "${nome}.json").text = """{"parent":"minecraft:item/handheld","textures":{"layer0":"examplemod:item/${nome}"}}""" }
         generated.each { nome -> new File(dir, "${nome}.json").text = """{"parent":"minecraft:item/generated","textures":{"layer0":"examplemod:item/${nome}"}}""" }
