@@ -13,15 +13,13 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
@@ -29,7 +27,6 @@ import java.util.List;
 
 public class ArmasEspeciaisItem {
 
-    // ================= ELYTRA SUPREMA (VOO DO CRIATIVO + SEM FOGOS) =================
     public static class ElytraSuprema extends ElytraItem {
         public final boolean isIrrelevante;
 
@@ -44,14 +41,13 @@ public class ArmasEspeciaisItem {
 
         @Override
         public Component getName(ItemStack stack) {
-            return Component.literal(isIrrelevante ? "❖ Elytra Irrelevante ❖" : "✦ Elytra do Universo ✦")
-                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Elytra Multiversal ❖" : "✦ Elytra do Universo ✦");
         }
 
         @Override
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("• Voo Livre do Criativo (Aperte Pulo 2x no Sobrevivência)").withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.literal("• Propulsão Infinita sem precisar de Fogos de Artifício").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("• Propulsão Infinita sem precisar de Fogos").withStyle(ChatFormatting.GOLD));
         }
 
         @Override
@@ -66,12 +62,8 @@ public class ArmasEspeciaisItem {
                     player.getAbilities().setFlyingSpeed(isIrrelevante ? 0.16F : 0.11F);
                     if (player.isFallFlying()) {
                         Vec3 look = player.getLookAngle();
-                        double vel = isIrrelevante ? 2.4D : 1.7D;
-                        player.setDeltaMovement(look.scale(vel));
+                        player.setDeltaMovement(look.scale(isIrrelevante ? 2.4D : 1.7D));
                         player.fallDistance = 0.0F;
-                        if (level instanceof ServerLevel sl && player.tickCount % 2 == 0) {
-                            sl.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 0.5, player.getZ(), 2, 0.2, 0.2, 0.2, 0.02);
-                        }
                     }
                 } else if (!player.isCreative() && !player.isSpectator() && player.getAbilities().mayfly) {
                     Item peito = player.getItemBySlot(EquipmentSlot.CHEST).getItem();
@@ -85,31 +77,21 @@ public class ArmasEspeciaisItem {
         }
     }
 
-    // ================= LANÇA SUPREMA =================
     public static class LancaSuprema extends TridentItem {
         public final boolean isIrrelevante;
-
         public LancaSuprema(boolean isIrrelevante) {
             super(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
-
         @Override public boolean isFoil(ItemStack stack) { return true; }
-
-        @Override
-        public Component getName(ItemStack stack) {
-            return Component.literal(isIrrelevante ? "❖ Lança Irrelevante ❖" : "✦ Lança do Universo ✦")
-                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+        @Override public Component getName(ItemStack stack) {
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Lança Multiversal ❖" : "✦ Lança do Universo ✦");
         }
-
-        @Override
-        public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+        @Override public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
             if (!player.level().isClientSide()) ExampleMod.executarAlvo(entity, player, isIrrelevante);
             return true;
         }
-
-        @Override
-        public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
             ItemStack stack = player.getItemInHand(hand);
             if (!level.isClientSide() && level instanceof ServerLevel sl) {
                 Vec3 dir = player.getLookAngle().normalize();
@@ -126,37 +108,24 @@ public class ArmasEspeciaisItem {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
         }
     }
-    
-    // ================= MAÇA SUPREMA =================
-    public static class MacaSuprema extends SwordItem {
+        public static class MacaSuprema extends SwordItem {
         public final boolean isIrrelevante;
-
         public MacaSuprema(boolean isIrrelevante) {
-            super(FerramentaSupremaItem.TIER_APICE, 999999999, 100.0F,
-                    new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
+            super(FerramentaSupremaItem.TIER_APICE, 999999999, 100.0F, new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
-
         @Override public boolean isFoil(ItemStack stack) { return true; }
-
-        @Override
-        public Component getName(ItemStack stack) {
-            return Component.literal(isIrrelevante ? "❖ Maça Irrelevante ❖" : "✦ Maça do Universo ✦")
-                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+        @Override public Component getName(ItemStack stack) {
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Maça Multiversal ❖" : "✦ Maça do Universo ✦");
         }
-
-        @Override
-        public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+        @Override public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
             if (!player.level().isClientSide()) ExampleMod.executarAlvo(entity, player, isIrrelevante);
             return true;
         }
-
-        @Override
-        public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
             ItemStack stack = player.getItemInHand(hand);
             if (!level.isClientSide() && level instanceof ServerLevel sl) {
-                double raio = isIrrelevante ? 35.0D : 22.0D;
-                for (Entity alvo : sl.getEntities(player, player.getBoundingBox().inflate(raio))) {
+                for (Entity alvo : sl.getEntities(player, player.getBoundingBox().inflate(isIrrelevante ? 35.0D : 22.0D))) {
                     ExampleMod.executarAlvo(alvo, player, isIrrelevante);
                 }
                 sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, player.getX(), player.getY(), player.getZ(), 5, 3.0, 0.5, 3.0, 0.1);
@@ -166,35 +135,41 @@ public class ArmasEspeciaisItem {
         }
     }
 
-    // ================= TOTEM DA VIDA UNIVERSAL =================
     public static class TotemSupremo extends Item {
-        public TotemSupremo() {
+        public final boolean isIrrelevante;
+        public TotemSupremo(boolean isIrrelevante) {
             super(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
+            this.isIrrelevante = isIrrelevante;
         }
-
         @Override public boolean isFoil(ItemStack stack) { return true; }
-
-        @Override
-        public Component getName(ItemStack stack) {
-            return Component.literal("✦ Totem da Vida Universal ✦").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        @Override public Component getName(ItemStack stack) {
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Totem da Yggdrasil ❖" : "✦ Totem da Vida Universal ✦");
         }
     }
 
     @SubscribeEvent
     public void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof Player player) {
-            boolean temTotem = player.getMainHandItem().getItem() instanceof TotemSupremo
-                    || player.getOffhandItem().getItem() instanceof TotemSupremo
+            boolean temYgg = player.getMainHandItem().is(ExampleMod.TOTEM_YGGDRASIL.get())
+                    || player.getOffhandItem().is(ExampleMod.TOTEM_YGGDRASIL.get())
+                    || player.getInventory().contains(new ItemStack(ExampleMod.TOTEM_YGGDRASIL.get()));
+            boolean temUni = player.getMainHandItem().is(ExampleMod.TOTEM_ABSOLUTO.get())
+                    || player.getOffhandItem().is(ExampleMod.TOTEM_ABSOLUTO.get())
                     || player.getInventory().contains(new ItemStack(ExampleMod.TOTEM_ABSOLUTO.get()));
-            if (temTotem) {
+            if (temYgg || temUni) {
                 event.setCanceled(true);
                 player.setHealth(player.getMaxHealth());
                 player.removeAllEffects();
-                player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 4));
-                player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 2400, 9));
-                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 1200, 4));
+                player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 6000, 4));
+                player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 6000, 9));
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 6000, 4));
+                if (temYgg && player.level() instanceof ServerLevel sl) {
+                    for (Entity e : sl.getEntities(player, player.getBoundingBox().inflate(30.0D))) {
+                        if (e instanceof Enemy) ExampleMod.executarAlvo(e, player, true);
+                    }
+                }
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.5F, 1.0F);
-                player.displayClientMessage(VisualEAdaptacao.textoBrilhante("✦ TOTEM DA VIDA UNIVERSAL ATIVADO! ✦"), true);
+                player.displayClientMessage(VisualEAdaptacao.textoBrilhante(temYgg ? "❖ TOTEM DA YGGDRASIL ATIVADO! ❖" : "✦ TOTEM DA VIDA UNIVERSAL ATIVADO! ✦"), true);
             }
         }
     }
