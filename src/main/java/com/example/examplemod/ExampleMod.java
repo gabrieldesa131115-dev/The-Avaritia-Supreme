@@ -60,6 +60,7 @@ public class ExampleMod {
     public static final RegistryObject<Item> ESCUDO_IMENSURAVEL = ITEMS.register("escudo_imensuravel", () -> new ItensAvaritiaExtra.EscudoSupremo(false));
     public static final RegistryObject<Item> ESCUDO_IRRELEVANTE = ITEMS.register("escudo_irrelevante", () -> new ItensAvaritiaExtra.EscudoSupremo(true));
     public static final RegistryObject<Item> FERRAMENTA_IMENSURAVEL = ITEMS.register("ferramenta_imensuravel", () -> new FerramentaSupremaItem(false, "✦ Quebra-Mundos Imensurável ✦"));
+    public static final RegistryObject<Item> ENXADA_IMENSURAVEL = ITEMS.register("enxada_imensuravel", EnxadaSupremaIte
     public static final RegistryObject<Item> FERRAMENTA_IRRELEVANTE = ITEMS.register("ferramenta_irrelevante", () -> new FerramentaSupremaItem(true, "❖ Quebra-Mundos Irrelevante ❖"));
     public static final RegistryObject<Item> ELYTRA_IMENSURAVEL = ITEMS.register("elytra_imensuravel", () -> new ArmasEspeciaisItem.ElytraSuprema(false));
     public static final RegistryObject<Item> ELYTRA_IRRELEVANTE = ITEMS.register("elytra_irrelevante", () -> new ArmasEspeciaisItem.ElytraSuprema(true));
@@ -85,7 +86,8 @@ public class ExampleMod {
         bus.addListener(this::addCreative);
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new VisualEAdaptacao());
-    }
+    }        MinecraftForge.EVENT_BUS.register(new EnxadaSupremaItem());
+
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.COMBAT) ITEMS.getEntries().forEach(item -> event.accept(item.get()));
