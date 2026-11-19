@@ -7,10 +7,11 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -24,9 +25,14 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 @Mod(ExampleMod.MODID)
 public class ExampleMod {
     public static final String MODID = "examplemod";
+    public static final Map<UUID, Vec3> POSICAO_SALVA = new HashMap<>();
 
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
@@ -63,17 +69,16 @@ public class ExampleMod {
     public static final RegistryObject<Item> TOTEM_ABSOLUTO = ITEMS.register("totem_absoluto", ArmasEspeciaisItem.TotemSupremo::new);
     public static final RegistryObject<Item> INFINITY_BALL = ITEMS.register("infinity_ball", InfinityBallItem::new);
     public static final RegistryObject<Item> RELOGIO_TEMPO = ITEMS.register("relogio_tempo", RelogioTempoItem::new);
-    public static final RegistryObject<Item> ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema(true));
-    public static final RegistryObject<Item> ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema(false));
-    public static final RegistryObject<Item> LINGOTE_INFINITO = ITEMS.register("lingote_infinito", () -> new ItensAvaritiaExtra.MaterialSupremo(true));
-    public static final RegistryObject<Item> SINGULARIDADE_SUPREMA = ITEMS.register("singularidade_suprema", () -> new ItensAvaritiaExtra.MaterialSupremo(false));
-    public static final RegistryObject<CreativeModeTab> ABA_SUPREMA = CREATIVE_MODE_TABS.register("aba_suprema", () -> CreativeModeTab.builder()
+    public static final RegistryObject<Item> ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema("Ensopado Cósmico Supremo", "Nutrição Infinita e Imortalidade"));
+    public static final RegistryObject<Item> ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema("Almôndega Cósmica", "Energia Estelar Concentrada"));
+    public static final RegistryObject<Item> LINGOTE_INFINITO = ITEMS.register("lingote_infinito", () -> new ItensAvaritiaExtra.MaterialSupremo("Lingote do Infinito", "Forjado no Núcleo de Singularidades"));
+    public static final RegistryObject<Item> SINGULARIDADE_SUPREMA = ITEMS.register("singularidade_suprema", () -> new ItensAvaritiaExtra.MaterialSupremo("Singularidade Suprema", "Massa Cósmica Absoluta"));
+        public static final RegistryObject<CreativeModeTab> ABA_SUPREMA = CREATIVE_MODE_TABS.register("aba_suprema", () -> CreativeModeTab.builder()
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .title(Component.literal("❖ Avaritia Supreme ❖"))
             .icon(() -> ESPADA_IRRELEVANTE.get().getDefaultInstance())
-            .displayItems((parameters, output) -> {
-                ITEMS.getEntries().forEach(item -> output.accept(item.get()));
-            }).build());
+            .displayItems((parameters, output) -> ITEMS.getEntries().forEach(item -> output.accept(item.get())))
+            .build());
 
     public ExampleMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -88,18 +93,31 @@ public class ExampleMod {
         MinecraftForge.EVENT_BUS.register(new ItensAvaritiaExtra());
     }
 
+    public static void executarAlvo(Entity alvo, Player atacante, boolean isIrrelevante) {
+        if (alvo == null || alvo == atacante) return;
+        if (alvo instanceof LivingEntity living) {
+            living.setHealth(0.0F);
+            living.die(atacante.damageSources().playerAttack(atacante));
+            if (isIrrelevante || !living.isDeadOrDying()) {
+                living.discard();
+            }
+        } else {
+            alvo.discard();
+        }
+    }
+
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("infinity")
                 .then(Commands.literal("salvar").executes(ctx -> {
                     ServerPlayer sp = ctx.getSource().getPlayerOrException();
-                    InfinityBallItem.LUGAR_SALVO.put(sp.getUUID(), sp.position());
+                    POSICAO_SALVA.put(sp.getUUID(), sp.position());
                     sp.displayClientMessage(Component.literal("📍 Posição salva com sucesso!").withStyle(ChatFormatting.GREEN), true);
                     return 1;
                 }))
                 .then(Commands.literal("irsalvo").executes(ctx -> {
                     ServerPlayer sp = ctx.getSource().getPlayerOrException();
-                    Vec3 pos = InfinityBallItem.LUGAR_SALVO.get(sp.getUUID());
+                    Vec3 pos = POSICAO_SALVA.get(sp.getUUID());
                     if (pos != null) {
                         sp.teleportTo(sp.serverLevel(), pos.x, pos.y, pos.z, sp.getYRot(), sp.getXRot());
                         sp.fallDistance = 0.0F;
@@ -140,4 +158,4 @@ public class ExampleMod {
                             return 1;
                         }))))));
     }
-                        }
+}
