@@ -127,3 +127,75 @@ public class ArmasEspeciaisItem {
         }
     }
     
+    // ================= MAÇA SUPREMA =================
+    public static class MacaSuprema extends SwordItem {
+        public final boolean isIrrelevante;
+
+        public MacaSuprema(boolean isIrrelevante) {
+            super(FerramentaSupremaItem.TIER_APICE, 999999999, 100.0F,
+                    new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
+            this.isIrrelevante = isIrrelevante;
+        }
+
+        @Override public boolean isFoil(ItemStack stack) { return true; }
+
+        @Override
+        public Component getName(ItemStack stack) {
+            return Component.literal(isIrrelevante ? "❖ Maça Irrelevante ❖" : "✦ Maça do Universo ✦")
+                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+        }
+
+        @Override
+        public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+            if (!player.level().isClientSide()) ExampleMod.executarAlvo(entity, player, isIrrelevante);
+            return true;
+        }
+
+        @Override
+        public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (!level.isClientSide() && level instanceof ServerLevel sl) {
+                double raio = isIrrelevante ? 35.0D : 22.0D;
+                for (Entity alvo : sl.getEntities(player, player.getBoundingBox().inflate(raio))) {
+                    ExampleMod.executarAlvo(alvo, player, isIrrelevante);
+                }
+                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, player.getX(), player.getY(), player.getZ(), 5, 3.0, 0.5, 3.0, 0.1);
+                sl.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.5F, 0.7F);
+            }
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        }
+    }
+
+    // ================= TOTEM DA VIDA UNIVERSAL =================
+    public static class TotemSupremo extends Item {
+        public TotemSupremo() {
+            super(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
+        }
+
+        @Override public boolean isFoil(ItemStack stack) { return true; }
+
+        @Override
+        public Component getName(ItemStack stack) {
+            return Component.literal("✦ Totem da Vida Universal ✦").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            boolean temTotem = player.getMainHandItem().getItem() instanceof TotemSupremo
+                    || player.getOffhandItem().getItem() instanceof TotemSupremo
+                    || player.getInventory().contains(new ItemStack(ExampleMod.TOTEM_ABSOLUTO.get()));
+            if (temTotem) {
+                event.setCanceled(true);
+                player.setHealth(player.getMaxHealth());
+                player.removeAllEffects();
+                player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 1200, 4));
+                player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 2400, 9));
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 1200, 4));
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.5F, 1.0F);
+                player.displayClientMessage(VisualEAdaptacao.textoBrilhante("✦ TOTEM DA VIDA UNIVERSAL ATIVADO! ✦"), true);
+            }
+        }
+    }
+}
