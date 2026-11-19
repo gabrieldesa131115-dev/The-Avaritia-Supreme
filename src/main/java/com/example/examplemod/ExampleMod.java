@@ -43,8 +43,8 @@ public class ExampleMod {
     public static final RegistryObject<Item> LANCA_IRRELEVANTE = ITEMS.register("lanca_irrelevante", () -> new ArmasEspeciaisItem.LancaSuprema(true));
     public static final RegistryObject<Item> MACA_IMENSURAVEL = ITEMS.register("maca_imensuravel", () -> new ArmasEspeciaisItem.MacaSuprema(false));
     public static final RegistryObject<Item> MACA_IRRELEVANTE = ITEMS.register("maca_irrelevante", () -> new ArmasEspeciaisItem.MacaSuprema(true));
-    public static final RegistryObject<Item> FERRAMENTA_IMENSURAVEL = ITEMS.register("ferramenta_imensuravel", () -> new FerramentaSupremaItem(false));
-    public static final RegistryObject<Item> FERRAMENTA_IRRELEVANTE = ITEMS.register("ferramenta_irrelevante", () -> new FerramentaSupremaItem(true));
+    public static final RegistryObject<Item> FERRAMENTA_IMENSURAVEL = ITEMS.register("ferramenta_imensuravel", () -> new FerramentaSupremaItem(false, "Quebra-Mundos Imensurável"));
+    public static final RegistryObject<Item> FERRAMENTA_IRRELEVANTE = ITEMS.register("ferramenta_irrelevante", () -> new FerramentaSupremaItem(true, "Quebra-Mundos Irrelevante"));
     public static final RegistryObject<Item> ENXADA_IMENSURAVEL = ITEMS.register("enxada_imensuravel", EnxadaSupremaItem::new);
 
     public static final RegistryObject<Item> ARCO_IMENSURAVEL = ITEMS.register("arco_imensuravel", () -> new ArcoBestaSupremaItem.ArcoSupremo(false));
@@ -56,21 +56,21 @@ public class ExampleMod {
     public static final RegistryObject<Item> ELYTRA_IMENSURAVEL = ITEMS.register("elytra_imensuravel", () -> new ArmasEspeciaisItem.ElytraSuprema(false));
     public static final RegistryObject<Item> ELYTRA_IRRELEVANTE = ITEMS.register("elytra_irrelevante", () -> new ArmasEspeciaisItem.ElytraSuprema(true));
 
-    public static final RegistryObject<Item> CAPACETE_IMENSURAVEL = ITEMS.register("capacete_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, false));
-    public static final RegistryObject<Item> PEITORAL_IMENSURAVEL = ITEMS.register("peitoral_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, false));
-    public static final RegistryObject<Item> CALCA_IMENSURAVEL = ITEMS.register("calca_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, false));
-    public static final RegistryObject<Item> BOTAS_IMENSURAVEL = ITEMS.register("botas_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, false));
+    public static final RegistryObject<Item> CAPACETE_IMENSURAVEL = ITEMS.register("capacete_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, false, "Capacete Imensurável"));
+    public static final RegistryObject<Item> PEITORAL_IMENSURAVEL = ITEMS.register("peitoral_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, false, "Peitoral Imensurável"));
+    public static final RegistryObject<Item> CALCA_IMENSURAVEL = ITEMS.register("calca_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, false, "Calça Imensurável"));
+    public static final RegistryObject<Item> BOTAS_IMENSURAVEL = ITEMS.register("botas_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, false, "Botas Imensuráveis"));
 
-    public static final RegistryObject<Item> CAPACETE_IRRELEVANTE = ITEMS.register("capacete_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, true));
-    public static final RegistryObject<Item> PEITORAL_IRRELEVANTE = ITEMS.register("peitoral_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, true));
-    public static final RegistryObject<Item> CALCA_IRRELEVANTE = ITEMS.register("calca_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, true));
-    public static final RegistryObject<Item> BOTAS_IRRELEVANTE = ITEMS.register("botas_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, true));
+    public static final RegistryObject<Item> CAPACETE_IRRELEVANTE = ITEMS.register("capacete_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, true, "Capacete Irrelevante"));
+    public static final RegistryObject<Item> PEITORAL_IRRELEVANTE = ITEMS.register("peitoral_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, true, "Peitoral Irrelevante"));
+    public static final RegistryObject<Item> CALCA_IRRELEVANTE = ITEMS.register("calca_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, true, "Calça Irrelevante"));
+    public static final RegistryObject<Item> BOTAS_IRRELEVANTE = ITEMS.register("botas_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, true, "Botas Irrelevantes"));
 
     public static final RegistryObject<Item> TOTEM_ABSOLUTO = ITEMS.register("totem_absoluto", ArmasEspeciaisItem.TotemSupremo::new);
     public static final RegistryObject<Item> INFINITY_BALL = ITEMS.register("infinity_ball", InfinityBallItem::new);
     public static final RegistryObject<Item> RELOGIO_TEMPO = ITEMS.register("relogio_tempo", RelogioTempoItem::new);
-    public static final RegistryObject<Item> ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema("Ensopado Cósmico Supremo", "Nutrição Infinita e Imortalidade"));
-    public static final RegistryObject<Item> ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema("Almôndega Cósmica", "Energia Estelar Concentrada"));
+    public static final RegistryObject<Item> ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema(true));
+    public static final RegistryObject<Item> ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema(false));
     public static final RegistryObject<Item> LINGOTE_INFINITO = ITEMS.register("lingote_infinito", () -> new ItensAvaritiaExtra.MaterialSupremo("Lingote do Infinito", "Forjado no Núcleo de Singularidades"));
     public static final RegistryObject<Item> SINGULARIDADE_SUPREMA = ITEMS.register("singularidade_suprema", () -> new ItensAvaritiaExtra.MaterialSupremo("Singularidade Suprema", "Massa Cósmica Absoluta"));
         public static final RegistryObject<CreativeModeTab> ABA_SUPREMA = CREATIVE_MODE_TABS.register("aba_suprema", () -> CreativeModeTab.builder()
