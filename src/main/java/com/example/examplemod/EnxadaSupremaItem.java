@@ -116,7 +116,9 @@ public class EnxadaSupremaItem extends HoeItem {
     @SubscribeEvent
     public void onComerMutada(LivingEntityUseItemEvent.Finish event) {
         ItemStack stack = event.getItem();
-        if (stack.hasTag() && stack.getTag().getBoolean("MutacaoCosmica") && event.getEntity() instanceof LivingEntity living) {
+                if (stack.hasTag() && stack.getTag().getBoolean("MutacaoCosmica")) {
+            LivingEntity living = event.getEntity();
+                    
             if (living instanceof Player p) {
                 p.getFoodData().setFoodLevel(20);
                 p.getFoodData().setSaturation(20.0F);
