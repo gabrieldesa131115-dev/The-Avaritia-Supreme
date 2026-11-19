@@ -8,68 +8,45 @@ plugins {
 version = '1.0.0'
 group = 'com.example.examplemod'
 
-base {
-    archivesName = 'examplemod'
-}
-
+base { archivesName = 'examplemod' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
     mappings channel: 'official', version: '1.20.1'
     copyIdeResources = true
-
     runs {
         configureEach {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            mods {
-                examplemod {
-                    source sourceSets.main
-                }
-            }
+            mods { examplemod { source sourceSets.main } }
         }
-        client {
-            property 'forge.enabledGameTestNamespaces', 'examplemod'
-        }
-        server {
-            property 'forge.enabledGameTestNamespaces', 'examplemod'
-            args '--nogui'
-        }
+        client { property 'forge.enabledGameTestNamespaces', 'examplemod' }
+        server { property 'forge.enabledGameTestNamespaces', 'examplemod'; args '--nogui' }
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
-}
+repositories { mavenCentral() }
+dependencies { minecraft 'net.minecraftforge:forge:1.20.1-47.2.0' }
 tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
-            minecraft_version   : '1.20.1', minecraft_version_range: '[1.20.1,1.21)',
-            forge_version       : '47.2.0', forge_version_range: '[47,)',
-            loader_version_range: '[47,)',
-            mod_id              : 'examplemod', mod_name: 'Avaritia Supreme',
-            mod_license         : 'MIT', mod_version: '1.0.0',
-            mod_authors         : 'SupremeDev', mod_description: 'Mod Supremo Imensuravel e Irrelevante'
+            minecraft_version: '1.20.1', minecraft_version_range: '[1.20.1,1.21)',
+            forge_version: '47.2.0', forge_version_range: '[47,)',
+            loader_version_range: '[47,)', mod_id: 'examplemod', mod_name: 'Avaritia Supreme',
+            mod_license: 'MIT', mod_version: '1.0.0',
+            mod_authors: 'SupremeDev', mod_description: 'Mod Supremo Imensuravel e Irrelevante'
     ]
     inputs.properties replaceProperties
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
-    }
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand replaceProperties + [project: project] }
 }
 
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
-                'Specification-Title'     : 'examplemod',
-                'Specification-Vendor'    : 'SupremeDev',
-                'Specification-Version'   : '1',
-                'Implementation-Title'    : project.name,
-                'Implementation-Version'  : project.jar.archiveVersion,
-                'Implementation-Vendor'   : 'SupremeDev',
+                'Specification-Title': 'examplemod', 'Specification-Vendor': 'SupremeDev',
+                'Specification-Version': '1', 'Implementation-Title': project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor': 'SupremeDev',
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
@@ -81,7 +58,7 @@ tasks.register('gerarModelosAutomaticos') {
     doLast {
         pastaModelos.mkdirs()
         def handheld = ["espada_imensuravel", "espada_irrelevante", "lanca_imensuravel", "lanca_irrelevante", "maca_imensuravel", "maca_irrelevante", "ferramenta_imensuravel", "ferramenta_irrelevante", "enxada_imensuravel", "pa_imensuravel", "pa_irrelevante", "machado_imensuravel", "machado_irrelevante"]
-        def generated = ["arco_imensuravel", "arco_irrelevante", "besta_imensuravel", "besta_irrelevante", "escudo_imensuravel", "escudo_irrelevante", "elytra_imensuravel", "elytra_irrelevante", "capacete_imensuravel", "peitoral_imensuravel", "calca_imensuravel", "botas_imensuravel", "capacete_irrelevante", "peitoral_irrelevante", "calca_irrelevante", "botas_irrelevante", "totem_absoluto", "infinity_ball", "relogio_tempo", "ensopado_supremo", "almondega_cosmica", "lingote_infinito", "singularidade_suprema"]
+        def generated = ["arco_imensuravel", "arco_irrelevante", "besta_imensuravel", "besta_irrelevante", "escudo_imensuravel", "escudo_irrelevante", "elytra_imensuravel", "elytra_irrelevante", "capacete_imensuravel", "peitoral_imensuravel", "calca_imensuravel", "botas_imensuravel", "capacete_irrelevante", "peitoral_irrelevante", "calca_irrelevante", "botas_irrelevante", "totem_absoluto", "totem_yggdrasil", "infinity_ball", "relogio_tempo", "ensopado_supremo", "almondega_cosmica", "lingote_infinito", "singularidade_suprema"]
         handheld.each { nome -> new File(pastaModelos, "${nome}.json").text = """{"parent":"minecraft:item/handheld","textures":{"layer0":"examplemod:item/${nome}"}}""" }
         generated.each { nome -> new File(pastaModelos, "${nome}.json").text = """{"parent":"minecraft:item/generated","textures":{"layer0":"examplemod:item/${nome}"}}""" }
     }
