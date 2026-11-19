@@ -50,6 +50,7 @@ public class VisualEAdaptacao {
     public static boolean ehItemDoMod(Item item) {
         return item instanceof EspadaSupremaItem || item instanceof ArmaduraSupremaItem
                 || item instanceof FerramentaSupremaItem || item instanceof EnxadaSupremaItem
+                || item instanceof PaEMachadoSupremoItem.PaSuprema || item instanceof PaEMachadoSupremoItem.MachadoSupremo
                 || item instanceof InfinityBallItem || item instanceof RelogioTempoItem
                 || item instanceof ArmasEspeciaisItem.ElytraSuprema || item instanceof ArmasEspeciaisItem.LancaSuprema
                 || item instanceof ArmasEspeciaisItem.MacaSuprema || item instanceof ArmasEspeciaisItem.TotemSupremo
@@ -59,13 +60,15 @@ public class VisualEAdaptacao {
     }
 
     public static boolean ehIrrelevante(Item item) {
-        return item instanceof InfinityBallItem
-                || (item instanceof EspadaSupremaItem e && e.isIrrelevante)
+        return (item instanceof EspadaSupremaItem e && e.isIrrelevante)
                 || (item instanceof ArmaduraSupremaItem a && a.isIrrelevante)
                 || (item instanceof FerramentaSupremaItem f && f.isIrrelevante)
+                || (item instanceof PaEMachadoSupremoItem.PaSuprema pa && pa.isIrrelevante)
+                || (item instanceof PaEMachadoSupremoItem.MachadoSupremo ma && ma.isIrrelevante)
                 || (item instanceof ArmasEspeciaisItem.ElytraSuprema el && el.isIrrelevante)
                 || (item instanceof ArmasEspeciaisItem.LancaSuprema l && l.isIrrelevante)
                 || (item instanceof ArmasEspeciaisItem.MacaSuprema m && m.isIrrelevante)
+                || (item instanceof ArmasEspeciaisItem.TotemSupremo t && t.isIrrelevante)
                 || (item instanceof ArcoBestaSupremaItem.ArcoSupremo ar && ar.isIrrelevante)
                 || (item instanceof ArcoBestaSupremaItem.BestaSuprema b && b.isIrrelevante)
                 || (item instanceof ItensAvaritiaExtra.EscudoSupremo es && es.isIrrelevante);
@@ -77,6 +80,10 @@ public class VisualEAdaptacao {
         if (!ehItemDoMod(item)) return;
         boolean irr = ehIrrelevante(item);
         int adapt = getNivelAdaptacao(stack);
+        if (!event.getToolTip().isEmpty()) {
+            String tituloAtual = event.getToolTip().get(0).getString();
+            event.getToolTip().set(0, textoBrilhante(tituloAtual));
+        }
         event.getToolTip().removeIf(c -> c.getString().contains("99999") || c.getString().contains("100000") || c.getString().contains("Attack Damage") || c.getString().contains("Dano de ataque") || c.getString().contains("Armor") || c.getString().contains("Armadura"));
         event.getToolTip().add(Component.literal("⚡ Adaptação Evolutiva: ").withStyle(ChatFormatting.GRAY)
                 .append(textoBrilhante("Nível " + adapt + " (+" + (adapt * 15) + "% Poder)")));
@@ -86,7 +93,7 @@ public class VisualEAdaptacao {
         } else if (item instanceof ArmaduraSupremaItem || item instanceof ItensAvaritiaExtra.EscudoSupremo || item instanceof ArmasEspeciaisItem.ElytraSuprema) {
             event.getToolTip().add(textoBrilhante(" +Infinity Armadura"));
             event.getToolTip().add(textoBrilhante(" Durabilidade: Infinita"));
-        } else if (item instanceof FerramentaSupremaItem || item instanceof EnxadaSupremaItem) {
+        } else if (item instanceof FerramentaSupremaItem || item instanceof EnxadaSupremaItem || item instanceof PaEMachadoSupremoItem.PaSuprema || item instanceof PaEMachadoSupremoItem.MachadoSupremo) {
             event.getToolTip().add(textoBrilhante(irr ? " Escavação: Irrelevante (Ápice)" : " Escavação: Imensurável"));
             event.getToolTip().add(textoBrilhante(" Durabilidade: Infinita"));
         }
