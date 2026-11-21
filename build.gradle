@@ -20,7 +20,7 @@ apply plugin: 'net.minecraftforge.gradle'
 version = '1.0.0'
 group = 'com.example.examplemod'
 
-base { archivesName = 'examplemod' }
+base { archivesName = 'The-Supreme-Avaritia' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
