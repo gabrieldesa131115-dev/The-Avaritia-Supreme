@@ -46,7 +46,9 @@ public class ExampleMod {
     public static final RegistryObject<Item> MACA_IRRELEVANTE = ITEMS.register("maca_irrelevante", () -> new ArmasEspeciaisItem.MacaSuprema(true));
     public static final RegistryObject<Item> FERRAMENTA_IMENSURAVEL = ITEMS.register("ferramenta_imensuravel", () -> new FerramentaSupremaItem(false, "Picareta do Universo"));
     public static final RegistryObject<Item> FERRAMENTA_IRRELEVANTE = ITEMS.register("ferramenta_irrelevante", () -> new FerramentaSupremaItem(true, "Picareta Multiversal"));
-    public static final RegistryObject<Item> ENXADA_IMENSURAVEL = ITEMS.register("enxada_imensuravel", EnxadaSupremaItem::new);
+        public static final RegistryObject<Item> ENXADA_IMENSURAVEL = ITEMS.register("enxada_imensuravel", () -> new EnxadaSupremaItem(false));
+    public static final RegistryObject<Item> ENXADA_IRRELEVANTE = ITEMS.register("enxada_irrelevante", () -> new EnxadaSupremaItem(true));
+    
     public static final RegistryObject<Item> PA_IMENSURAVEL = ITEMS.register("pa_imensuravel", () -> new PaEMachadoSupremoItem.PaSuprema(false));
     public static final RegistryObject<Item> PA_IRRELEVANTE = ITEMS.register("pa_irrelevante", () -> new PaEMachadoSupremoItem.PaSuprema(true));
     public static final RegistryObject<Item> MACHADO_IMENSURAVEL = ITEMS.register("machado_imensuravel", () -> new PaEMachadoSupremoItem.MachadoSupremo(false));
