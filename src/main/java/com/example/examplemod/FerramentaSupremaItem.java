@@ -2,7 +2,6 @@ package com.example.examplemod;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -49,9 +48,18 @@ public class FerramentaSupremaItem extends DiggerItem {
     @Override public boolean isCorrectToolForDrops(BlockState state) { return true; }
 
     @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (!attacker.level().isClientSide() && attacker instanceof Player p) {
+            float dano = this.isIrrelevante ? 50000000000000000.0F : 750000000.0F;
+            target.hurt(p.damageSources().playerAttack(p), dano);
+            VisualEAdaptacao.adaptarItem(stack, p, "Impacto Tectônico");
+        }
+        return true;
+    }
+
+    @Override
     public Component getName(ItemStack stack) {
-        return Component.literal((isIrrelevante ? "❖ " : "✦ ") + titulo + (isIrrelevante ? " ❖" : " ✦"))
-                .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+        return VisualEAdaptacao.textoBrilhante((isIrrelevante ? "❖ " : "✦ ") + titulo + (isIrrelevante ? " ❖" : " ✦"));
     }
 
     private static String getNomeModo(int m, boolean irr) {
@@ -118,4 +126,3 @@ public class FerramentaSupremaItem extends DiggerItem {
         return true;
     }
 }
-
