@@ -29,14 +29,15 @@ import java.util.*;
 public class PaEMachadoSupremoItem {
 
     // ================= PÁ SUPREMA =================
-    public static class PaSuprema extends ShovelItem {
+        public static class PaSuprema extends ShovelItem {
         public final boolean isIrrelevante;
 
         public PaSuprema(boolean isIrrelevante) {
-            super(FerramentaSupremaItem.TIER_APICE, 80.0F, 100.0F,
+            super(FerramentaSupremaItem.TIER_APICE, 50000000.0F, 100.0F,
                     new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
+            
 
         @Override public boolean isFoil(ItemStack stack) { return true; }
         @Override public float getDestroySpeed(ItemStack stack, BlockState state) { return 999999.0F; }
@@ -112,14 +113,15 @@ public class PaEMachadoSupremoItem {
         }
     }
       // ================= MACHADO SUPREMO =================
-    public static class MachadoSupremo extends AxeItem {
+        public static class MachadoSupremo extends AxeItem {
         public final boolean isIrrelevante;
 
         public MachadoSupremo(boolean isIrrelevante) {
-            super(FerramentaSupremaItem.TIER_APICE, 120.0F, 100.0F,
+            super(FerramentaSupremaItem.TIER_APICE, 500000000.0F, 100.0F,
                     new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
+            
 
         @Override public boolean isFoil(ItemStack stack) { return true; }
         @Override public float getDestroySpeed(ItemStack stack, BlockState state) { return 999999.0F; }
@@ -175,8 +177,39 @@ public class PaEMachadoSupremoItem {
             if (!ctx.getLevel().isClientSide() && ctx.getLevel() instanceof ServerLevel sl && ctx.getPlayer() != null && !ctx.getPlayer().isShiftKeyDown() && modo == 1) {
                 BlockPos c = ctx.getClickedPos();
                 int r = isIrrelevante ? 8 : 4;
-                boolean descascou = false;
-                for (int x = -r; x  fila = new LinkedList<>();
+                                boolean descascou = false;
+                for (int x = -r; x <= r; x++) {
+                    for (int y = -r; y <= r; y++) {
+                        for (int z = -r; z <= r; z++) {
+                            BlockPos alvo = c.offset(x, y, z);
+                            BlockState st = sl.getBlockState(alvo);
+                            if (st.is(BlockTags.LOGS)) {
+                                Block novo = getBlocoDescascado(st.getBlock());
+                                if (novo != st.getBlock()) {
+                                    BlockState novoSt = novo.defaultBlockState();
+                                    if (st.hasProperty(RotatedPillarBlock.AXIS) && novoSt.hasProperty(RotatedPillarBlock.AXIS)) {
+                                        novoSt = novoSt.setValue(RotatedPillarBlock.AXIS, st.getValue(RotatedPillarBlock.AXIS));
+                                    }
+                                    sl.setBlock(alvo, novoSt, 3);
+                                    descascou = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (descascou) {
+                    sl.playSound(null, c, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.2F, 1.1F);
+                    return InteractionResult.SUCCESS;
+                }
+            }
+            return super.useOn(ctx);
+        }
+                @Override
+        public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
+            int modo = stack.getOrCreateTag().getInt("ModoMachado");
+            if (!level.isClientSide() && level instanceof ServerLevel sl && entity instanceof Player p && state.is(BlockTags.LOGS) && (modo == 2 || modo == 3)) {
+                boolean descascada = (modo == 3);
+                Queue<BlockPos> fila = new LinkedList<>();
                 Set<BlockPos> visitados = new HashSet<>();
                 fila.add(pos);
                 visitados.add(pos);
@@ -219,4 +252,3 @@ public class PaEMachadoSupremoItem {
         }
     }
 }
-
