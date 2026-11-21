@@ -1,4 +1,5 @@
 package com.example.examplemod;
+import net.minecraft.sounds.SoundEvent;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.ChatFormatting;
