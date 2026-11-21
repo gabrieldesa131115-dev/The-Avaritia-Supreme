@@ -162,4 +162,36 @@ public class VisualEAdaptacao {
             }
         }
     }
+    private static final java.util.Map<java.util.UUID, java.util.List<net.minecraft.world.item.ItemStack>> ITENS_SALVOS_MORTE = new java.util.HashMap<>();
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public void onPlayerDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
+            java.util.List<net.minecraft.world.item.ItemStack> salvos = new java.util.ArrayList<>();
+            java.util.Iterator it = event.getDrops().iterator();
+            while (it.hasNext()) {
+                net.minecraft.world.entity.item.ItemEntity drop = it.next();
+                if (ehItemDoMod(drop.getItem().getItem())) {
+                    salvos.add(drop.getItem().copy());
+                    it.remove();
+                }
+            }
+            if (!salvos.isEmpty()) {
+                ITENS_SALVOS_MORTE.computeIfAbsent(player.getUUID(), k -> new java.util.ArrayList<>()).addAll(salvos);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        net.minecraft.world.entity.player.Player player = event.getEntity();
+        java.util.List<net.minecraft.world.item.ItemStack> salvos = ITENS_SALVOS_MORTE.remove(player.getUUID());
+        if (salvos != null) {
+            for (net.minecraft.world.item.ItemStack stack : salvos) {
+                if (!player.getInventory().add(stack)) {
+                    player.drop(stack, false);
+                }
+            }
+        }
+    }
 }
