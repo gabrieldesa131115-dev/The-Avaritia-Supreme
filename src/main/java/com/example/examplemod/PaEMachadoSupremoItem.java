@@ -193,11 +193,52 @@ public class PaEMachadoSupremoItem {
             if (!ctx.getLevel().isClientSide() && ctx.getLevel() instanceof ServerLevel sl && ctx.getPlayer() != null && !ctx.getPlayer().isShiftKeyDown() && modo == 1) {
                 BlockPos c = ctx.getClickedPos();
                 int r = isIrrelevante ? 8 : 4;
-                boolean descascou = false;
-                                Queue fila = new LinkedList();
+                                boolean descascou = false;
+                for (int x = -r; !(x > r); x++) {
+                    for (int y = -r; !(y > r); y++) {
+                        for (int z = -r; !(z > r); z++) {
+                            BlockPos alvo = c.offset(x, y, z);
+                            BlockState st = sl.getBlockState(alvo);
+                            if (st.is(BlockTags.LOGS)) {
+                                Block novo = getBlocoDescascado(st.getBlock());
+                                if (novo != st.getBlock()) {
+                                    BlockState novoSt = novo.defaultBlockState();
+                                    if (st.hasProperty(RotatedPillarBlock.AXIS) && novoSt.hasProperty(RotatedPillarBlock.AXIS)) {
+                                        novoSt = novoSt.setValue(RotatedPillarBlock.AXIS, st.getValue(RotatedPillarBlock.AXIS));
+                                    }
+                                    sl.setBlock(alvo, novoSt, 3);
+                                    descascou = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (descascou) {
+                    sl.playSound(null, c, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.2F, 1.1F);
+                    return InteractionResult.SUCCESS;
+                }
+            }
+            return super.useOn(ctx);
+        }
+
+        @Override
+        public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
+            
+            
+        
+        
+            int modo = stack.getOrCreateTag().getInt("ModoMachado");
+            if (!level.isClientSide() && level instanceof ServerLevel sl && entity instanceof Player p && state.is(BlockTags.LOGS) && (modo == 2 || modo == 3)) {
+                boolean descascada = (modo == 3);
+                Queue fila = new LinkedList();
                 Set visitados = new HashSet();
-                
+                fila.add(pos);
                 visitados.add(pos);
+                
+                                 
+                
+                
+                
 
                 if (descascada) {
                     Block stripInicial = getBlocoDescascado(state.getBlock());
@@ -207,9 +248,11 @@ public class PaEMachadoSupremoItem {
                 }
 
                 while (!fila.isEmpty() && visitados.size() < 500) {
-                    BlockPos atual = fila.poll();
+                                        BlockPos atual = (BlockPos) fila.poll();
+                
                     for (int dx = -1; dx <= 1; dx++) {
-                        for (int dy = 0; dy <= 1; dy++) {
+                                                for (int dy = 0; dy <= 1; dy++) {
+                                                    
                             for (int dz = -1; dz <= 1; dz++) {
                                 BlockPos viz = atual.offset(dx, dy, dz);
                                 if (!visitados.contains(viz)) {
