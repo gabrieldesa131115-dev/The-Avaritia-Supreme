@@ -1,4 +1,5 @@
 package com.example.examplemod;
+import net.minecraftforge.api.distmarker.Dist;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustParticleOptions;
