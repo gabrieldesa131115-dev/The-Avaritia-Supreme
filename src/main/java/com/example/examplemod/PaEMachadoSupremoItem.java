@@ -29,7 +29,7 @@ import java.util.*;
 public class PaEMachadoSupremoItem {
 
     // ================= PÁ SUPREMA =================
-        public static class PaSuprema extends ShovelItem {
+    public static class PaSuprema extends ShovelItem {
         public final boolean isIrrelevante;
 
         public PaSuprema(boolean isIrrelevante) {
@@ -37,16 +37,24 @@ public class PaEMachadoSupremoItem {
                     new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
-            
 
         @Override public boolean isFoil(ItemStack stack) { return true; }
         @Override public float getDestroySpeed(ItemStack stack, BlockState state) { return 999999.0F; }
         @Override public boolean isCorrectToolForDrops(BlockState state) { return true; }
 
         @Override
+        public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+            if (!attacker.level().isClientSide() && attacker instanceof Player p) {
+                float dano = this.isIrrelevante ? 100000000000000.0F : 50000000.0F;
+                target.hurt(p.damageSources().playerAttack(p), dano);
+                VisualEAdaptacao.adaptarItem(stack, p, "Impacto Sísmico");
+            }
+            return true;
+        }
+
+        @Override
         public Component getName(ItemStack stack) {
-            return Component.literal(isIrrelevante ? "❖ Pá Irrelevante ❖" : "✦ Pá do Universo ✦")
-                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Pá Multiversal ❖" : "✦ Pá do Universo ✦");
         }
 
         private static String getNomeModo(int m, boolean irr) {
@@ -112,8 +120,8 @@ public class PaEMachadoSupremoItem {
             return true;
         }
     }
-      // ================= MACHADO SUPREMO =================
-        public static class MachadoSupremo extends AxeItem {
+        // ================= MACHADO SUPREMO =================
+    public static class MachadoSupremo extends AxeItem {
         public final boolean isIrrelevante;
 
         public MachadoSupremo(boolean isIrrelevante) {
@@ -121,16 +129,24 @@ public class PaEMachadoSupremoItem {
                     new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
             this.isIrrelevante = isIrrelevante;
         }
-            
 
         @Override public boolean isFoil(ItemStack stack) { return true; }
         @Override public float getDestroySpeed(ItemStack stack, BlockState state) { return 999999.0F; }
         @Override public boolean isCorrectToolForDrops(BlockState state) { return true; }
 
         @Override
+        public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+            if (!attacker.level().isClientSide() && attacker instanceof Player p) {
+                float dano = this.isIrrelevante ? 10000000000000000.0F : 500000000.0F;
+                target.hurt(p.damageSources().playerAttack(p), dano);
+                VisualEAdaptacao.adaptarItem(stack, p, "Golpe Colossal");
+            }
+            return true;
+        }
+
+        @Override
         public Component getName(ItemStack stack) {
-            return Component.literal(isIrrelevante ? "❖ Machado Irrelevante ❖" : "✦ Machado do Universo ✦")
-                    .withStyle(isIrrelevante ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD);
+            return VisualEAdaptacao.textoBrilhante(isIrrelevante ? "❖ Machado Multiversal ❖" : "✦ Machado do Universo ✦");
         }
 
         private static String getNomeModo(int m) {
@@ -177,39 +193,8 @@ public class PaEMachadoSupremoItem {
             if (!ctx.getLevel().isClientSide() && ctx.getLevel() instanceof ServerLevel sl && ctx.getPlayer() != null && !ctx.getPlayer().isShiftKeyDown() && modo == 1) {
                 BlockPos c = ctx.getClickedPos();
                 int r = isIrrelevante ? 8 : 4;
-                                boolean descascou = false;
-                for (int x = -r; x <= r; x++) {
-                    for (int y = -r; y <= r; y++) {
-                        for (int z = -r; z <= r; z++) {
-                            BlockPos alvo = c.offset(x, y, z);
-                            BlockState st = sl.getBlockState(alvo);
-                            if (st.is(BlockTags.LOGS)) {
-                                Block novo = getBlocoDescascado(st.getBlock());
-                                if (novo != st.getBlock()) {
-                                    BlockState novoSt = novo.defaultBlockState();
-                                    if (st.hasProperty(RotatedPillarBlock.AXIS) && novoSt.hasProperty(RotatedPillarBlock.AXIS)) {
-                                        novoSt = novoSt.setValue(RotatedPillarBlock.AXIS, st.getValue(RotatedPillarBlock.AXIS));
-                                    }
-                                    sl.setBlock(alvo, novoSt, 3);
-                                    descascou = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (descascou) {
-                    sl.playSound(null, c, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.2F, 1.1F);
-                    return InteractionResult.SUCCESS;
-                }
-            }
-            return super.useOn(ctx);
-        }
-                @Override
-        public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
-            int modo = stack.getOrCreateTag().getInt("ModoMachado");
-            if (!level.isClientSide() && level instanceof ServerLevel sl && entity instanceof Player p && state.is(BlockTags.LOGS) && (modo == 2 || modo == 3)) {
-                boolean descascada = (modo == 3);
-                Queue<BlockPos> fila = new LinkedList<>();
+                boolean descascou = false;
+                for (int x = -r; x  fila = new LinkedList<>();
                 Set<BlockPos> visitados = new HashSet<>();
                 fila.add(pos);
                 visitados.add(pos);
@@ -251,4 +236,4 @@ public class PaEMachadoSupremoItem {
             return true;
         }
     }
-}
+                }
