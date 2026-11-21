@@ -68,16 +68,17 @@ public class ExampleMod {
     public static final RegistryObject BOTAS_IMENSURAVEL = ITEMS.register("botas_imensuravel", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, false, "Botas da Locomoção Multiversal"));
 
     public static final RegistryObject CAPACETE_IRRELEVANTE = ITEMS.register("capacete_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.HELMET, true, "Capacete Supremo do Omniverso"));
-    public static final RegistryObject PEITORAL_IRRELEVANTE = ITEMS.register("peitoral_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, true, "Peitoral da Supremacia Omniversal"));
+            public static final RegistryObject PEITORAL_IRRELEVANTE = ITEMS.register("peitoral_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.CHESTPLATE, true, "Peitoral da Supremacia Omniversal"));
     public static final RegistryObject CALCA_IRRELEVANTE = ITEMS.register("calca_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.LEGGINGS, true, "Calças da Fonte do Omnix"));
     public static final RegistryObject BOTAS_IRRELEVANTE = ITEMS.register("botas_irrelevante", () -> new ArmaduraSupremaItem(ArmorItem.Type.BOOTS, true, "Botas Supremas Omniversais"));
 
-    public static final RegistryObject TOTEM_ABSOLUTO = ITEMS.register("totem_absoluto", () -> new ArmasEspeciaisItem.TotemSupremo(false));
-    public static final RegistryObject TOTEM_YGGDRASIL = ITEMS.register("totem_yggdrasil", () -> new ArmasEspeciaisItem.TotemSupremo(true));
-    public static final RegistryObject INFINITY_BALL = ITEMS.register("infinity_ball", InfinityBallItem::new);
-    public static final RegistryObject RELOGIO_TEMPO = ITEMS.register("relogio_tempo", RelogioTempoItem::new);
-    public static final RegistryObject ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema("Ensopado Cósmico Supremo", true));
-    public static final RegistryObject ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema("Almôndega Cósmica", false));
+    public static final RegistryObject<Item> TOTEM_ABSOLUTO = ITEMS.register("totem_absoluto", () -> new ArmasEspeciaisItem.TotemSupremo(false));
+    public static final RegistryObject<Item> TOTEM_YGGDRASIL = ITEMS.register("totem_yggdrasil", () -> new ArmasEspeciaisItem.TotemSupremo(true));
+    public static final RegistryObject<Item> INFINITY_BALL = ITEMS.register("infinity_ball", InfinityBallItem::new);
+    public static final RegistryObject<Item> RELOGIO_TEMPO = ITEMS.register("relogio_tempo", RelogioTempoItem::new);
+    public static final RegistryObject<Item> ENSOPADO_SUPREMO = ITEMS.register("ensopado_supremo", () -> new ItensAvaritiaExtra.ComidaSuprema("Ensopado Cósmico Supremo", true));
+    public static final RegistryObject<Item> ALMONDEGA_COSMICA = ITEMS.register("almondega_cosmica", () -> new ItensAvaritiaExtra.ComidaSuprema("Almôndega Cósmica", false));
+    
     public static final RegistryObject LINGOTE_INFINITO = ITEMS.register("lingote_infinito", () -> new ItensAvaritiaExtra.MaterialSupremo("Lingote do Infinito", "Forjado no Núcleo de Singularidades"));
     public static final RegistryObject SINGULARIDADE_SUPREMA = ITEMS.register("singularidade_suprema", () -> new ItensAvaritiaExtra.MaterialSupremo("Singularidade Suprema", "Massa Cósmica Absoluta"));
 
