@@ -95,9 +95,7 @@ public class ExampleMod {
 
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new VisualEAdaptacao());
-        MinecraftForge.EVENT_BUS.register(new RelogioTempoItem());
-        MinecraftForge.EVENT_BUS.register(new ArmasEspeciaisItem());
-        MinecraftForge.EVENT_BUS.register(new ItensAvaritiaExtra());
+        
     }
 
     public static void executarAlvo(Entity alvo, Player atacante, boolean isIrrelevante) {
