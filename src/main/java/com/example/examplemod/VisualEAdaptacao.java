@@ -170,7 +170,8 @@ public class VisualEAdaptacao {
             java.util.List<net.minecraft.world.item.ItemStack> salvos = new java.util.ArrayList<>();
             java.util.Iterator it = event.getDrops().iterator();
             while (it.hasNext()) {
-                net.minecraft.world.entity.item.ItemEntity drop = it.next();
+                                net.minecraft.world.entity.item.ItemEntity drop = (net.minecraft.world.entity.item.ItemEntity) it.next();
+                
                 if (ehItemDoMod(drop.getItem().getItem())) {
                     salvos.add(drop.getItem().copy());
                     it.remove();
