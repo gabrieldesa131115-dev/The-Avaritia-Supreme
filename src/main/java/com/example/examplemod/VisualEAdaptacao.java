@@ -144,7 +144,7 @@ public class VisualEAdaptacao {
         }
     
         }
-    }
+    
 
     @SubscribeEvent
     public void onItemEntityTick(net.minecraftforge.event.TickEvent.LevelTickEvent event) {
