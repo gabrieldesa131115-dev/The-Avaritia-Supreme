@@ -119,7 +119,7 @@ public class PaEMachadoSupremoItem {
             }
             return true;
         }
-                                }
+                                            }
         // ================= MACHADO SUPREMO =================
     public static class MachadoSupremo extends AxeItem {
         public final boolean isIrrelevante;
@@ -236,4 +236,4 @@ public class PaEMachadoSupremoItem {
             return true;
         }
     }
-                    }
+}
