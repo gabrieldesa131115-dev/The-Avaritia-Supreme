@@ -194,7 +194,7 @@ public class PaEMachadoSupremoItem {
                 BlockPos c = ctx.getClickedPos();
                 int r = isIrrelevante ? 8 : 4;
                 boolean descascou = false;
-                for (int x = -r x  fila = new LinkedList<>();
+                for (int x = -r;  fila = new LinkedList<>()
                 Set<BlockPos> visitados = new HashSet<>();
                 fila.add(pos);
                 visitados.add(pos);
