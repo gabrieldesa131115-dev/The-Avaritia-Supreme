@@ -140,5 +140,24 @@ public class VisualEAdaptacao {
                 mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(cor, 1.3F), mc.player.getX() + Math.cos(ang) * 0.8D, mc.player.getY() + 1.1D, mc.player.getZ() + Math.sin(ang) * 0.8D, 0, 0.03, 0);
             }
         }
+    
+        }
+    }
+
+    @SubscribeEvent
+    public void onItemEntityTick(net.minecraftforge.event.TickEvent.LevelTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || event.level.isClientSide()) return;
+        if (event.level instanceof net.minecraft.server.level.ServerLevel sl) {
+            for (net.minecraft.world.entity.Entity e : sl.getAllEntities()) {
+                if (e instanceof net.minecraft.world.entity.item.ItemEntity itemEnt && ehItemDoMod(itemEnt.getItem().getItem())) {
+                    itemEnt.setInvulnerable(true);
+                    itemEnt.setUnlimitedLifetime();
+                    itemEnt.setNoGravity(itemEnt.isInLava() || itemEnt.getY() < sl.getMinBuildHeight() + 5);
+                    if (itemEnt.getY() < sl.getMinBuildHeight() + 2) {
+                        itemEnt.setDeltaMovement(0, 0.8D, 0);
+                    }
+                }
+            }
+        }
     }
 }
