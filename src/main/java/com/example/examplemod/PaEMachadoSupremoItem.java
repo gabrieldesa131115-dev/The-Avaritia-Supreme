@@ -119,7 +119,7 @@ public class PaEMachadoSupremoItem {
             }
             return true;
         }
-    }
+                                }
         // ================= MACHADO SUPREMO =================
     public static class MachadoSupremo extends AxeItem {
         public final boolean isIrrelevante;
@@ -193,7 +193,7 @@ public class PaEMachadoSupremoItem {
             if (!ctx.getLevel().isClientSide() && ctx.getLevel() instanceof ServerLevel sl && ctx.getPlayer() != null && !ctx.getPlayer().isShiftKeyDown() && modo == 1) {
                 BlockPos c = ctx.getClickedPos();
                 int r = isIrrelevante ? 8 : 4;
-                                boolean descascou = false;
+                boolean descascou = false;
                 for (int x = -r; x  fila = new LinkedList<>();
                 Set<BlockPos> visitados = new HashSet<>();
                 fila.add(pos);
@@ -236,4 +236,4 @@ public class PaEMachadoSupremoItem {
             return true;
         }
     }
-}
+                    }
