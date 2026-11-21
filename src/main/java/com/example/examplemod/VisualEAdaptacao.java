@@ -63,6 +63,8 @@ public class VisualEAdaptacao {
         return (item instanceof EspadaSupremaItem e && e.isIrrelevante)
                 || (item instanceof ArmaduraSupremaItem a && a.isIrrelevante)
                 || (item instanceof FerramentaSupremaItem f && f.isIrrelevante)
+                            || (item instanceof EnxadaSupremaItem ex && ex.isIrrelevante)
+            
                 || (item instanceof PaEMachadoSupremoItem.PaSuprema pa && pa.isIrrelevante)
                 || (item instanceof PaEMachadoSupremoItem.MachadoSupremo ma && ma.isIrrelevante)
                 || (item instanceof ArmasEspeciaisItem.ElytraSuprema el && el.isIrrelevante)
