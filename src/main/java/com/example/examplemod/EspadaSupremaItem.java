@@ -1,5 +1,4 @@
 package com.example.examplemod;
-import net.minecraftforge.api.distmarker.Dist;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -21,6 +20,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Vector3f;
@@ -83,8 +83,8 @@ public class EspadaSupremaItem extends SwordItem {
             VisualEAdaptacao.adaptarItem(stack, p, "Aniquilacao");
         }
         return true;
-    }
-        @Override
+            }
+      @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         int modo = stack.getOrCreateTag().getInt("ModoEspada");
@@ -99,15 +99,25 @@ public class EspadaSupremaItem extends SwordItem {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
         }
 
-        if (modo == 7 || modo == 8 || modo == 9) {
-            if (level.isClientSide()) {
+        if (level.isClientSide()) {
+            if (modo == 7 || modo == 8 || modo == 9) {
                 int cat = modo - 6;
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> TelaSeletorEspada.abrir(cat));
+            } else if (modo == 5) {
+                EfeitosCosmicosClient.spawnCorteDiagonal(player, false);
+                EfeitosCosmicosClient.spawnCorteDiagonal(player, true);
+            } else if (modo == 6) {
+                for (int k = 0; !(k > 7); k++) {
+                    double ang = k * (Math.PI / 4.0);
+                    EfeitosCosmicosClient.spawnRaioDiagonal(player.position().add(Math.cos(ang) * 9.0, 0, Math.sin(ang) * 9.0));
+                }
+            } else if (modo == 0 || modo == 1 || modo == 2 || modo == 3) {
+                EfeitosCosmicosClient.spawnRaioDiagonal(player.position().add(player.getLookAngle().scale(12.0)));
             }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+            return InteractionResultHolder.sidedSuccess(stack, true);
         }
 
-        if (!level.isClientSide() && level instanceof ServerLevel sl) {
+        if (level instanceof ServerLevel sl) {
             int apagados = 0;
             if (modo == 0 || modo == 1 || modo == 2 || modo == 3) {
                 AABB area = player.getBoundingBox().inflate(40.0D);
@@ -142,7 +152,7 @@ public class EspadaSupremaItem extends SwordItem {
                 Set<Entity> atingidos = new HashSet<>();
                 for (int i = 1; !(i > 45); i++) {
                     Vec3 p = origem.add(dir.scale(i));
-                    sl.sendParticles(i % 2 == 0 ? roxo : azul, p.x, p.y, p.z, 14, 1.4, 0.6, 1.4, 0.05);
+                    sl.sendParticles(i % 2 == 0 ? roxo : azul, p.x, p.y, p.z, 10, 1.2, 0.5, 1.2, 0.05);
                     for (Entity e : sl.getEntities(player, new AABB(p.x - 2.2, p.y - 2.2, p.z - 2.2, p.x + 2.2, p.y + 2.2, p.z + 2.2))) {
                         if (e != player && !(e instanceof ItemEntity)) atingidos.add(e);
                     }
@@ -161,11 +171,11 @@ public class EspadaSupremaItem extends SwordItem {
                     double rad = Math.toRadians(ang);
                     double px = player.getX() + Math.cos(rad) * raio;
                     double pz = player.getZ() + Math.sin(rad) * raio;
-                    sl.sendParticles(ang % 12 == 0 ? roxo : azul, px, player.getY() + 0.8, pz, 8, 0.4, 0.8, 0.4, 0.05);
+                    sl.sendParticles(ang % 12 == 0 ? roxo : azul, px, player.getY() + 0.8, pz, 6, 0.3, 0.6, 0.3, 0.05);
                 }
-                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, player.getX(), player.getY() + 1.0, player.getZ(), 4, 4.0, 1.0, 4.0, 0.1);
+                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, player.getX(), player.getY() + 1.0, player.getZ(), 3, 3.5, 1.0, 3.5, 0.1);
                 for (Entity alvo : sl.getEntities(player, player.getBoundingBox().inflate(raio))) {
-                    if (alvo != player && !(alvo instanceof ItemEntity) && alvo.distanceTo(player) <= raio) {
+                    if (alvo != player && !(alvo instanceof ItemEntity) && !(alvo.distanceTo(player) > raio)) {
                         ExampleMod.executarAlvo(alvo, player, this.isIrrelevante);
                         apagados++;
                     }
@@ -175,7 +185,7 @@ public class EspadaSupremaItem extends SwordItem {
             }
             if (apagados > 0) VisualEAdaptacao.adaptarItem(stack, player, "Expurgo Supremo");
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        return InteractionResultHolder.sidedSuccess(stack, false);
     }
 
     public static void executarComandoMenu(ServerPlayer player, String payload) {
@@ -218,4 +228,4 @@ public class EspadaSupremaItem extends SwordItem {
             player.displayClientMessage(VisualEAdaptacao.textoBrilhante("✦ Menu Espada: " + apagados + " alvos eliminados!"), true);
         } catch (Exception ignored) {}
     }
-                                                           }
+}
