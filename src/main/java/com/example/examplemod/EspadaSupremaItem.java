@@ -236,14 +236,15 @@ public class EspadaSupremaItem extends SwordItem {
 
     public static void executarComandoMenu(ServerPlayer player, String payload) {
         try {
-            String[] partes = payload.split("\\|", 4);
-            int cat = Integer.parseInt(partes);
-            double raio = Double.parseDouble(partes);
-            boolean todosServer = "1".equals(partes);
+                        List partes = Arrays.asList(payload.split("\\|", 4));
+            int cat = Integer.parseInt((String) partes.get(0));
+            double raio = Double.parseDouble((String) partes.get(1));
+            boolean todosServer = "1".equals(partes.get(2));
             Set escolhas = new HashSet();
-            if (partes.length > 3 && !partes.isEmpty()) {
-                escolhas.addAll(Arrays.asList(partes.split(",")));
+            if (partes.size() > 3 && !((String) partes.get(3)).isEmpty()) {
+                escolhas.addAll(Arrays.asList(((String) partes.get(3)).split(",")));
             }
+            
             boolean irr = player.getMainHandItem().getItem() instanceof EspadaSupremaItem esp && esp.isIrrelevante;
             int apagados = 0;
 
