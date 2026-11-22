@@ -83,11 +83,12 @@ public class InfinityBallItem extends Item {
             }
         } else if ("ILHAS".equals(tipo)) {
             Random r = new Random();
-            int[][] centros = {{0, 0, 0}, {16, 4, 12}, {-16, -3, 14}, {12, 6, -15}, {-14, 2, -12}};
+                        int[][] centros = {{0, 0, 0}, {16, 4, 12}, {-16, -3, 14}, {12, 6, -15}, {-14, 2, -12}};
             for (int k = 0; !(k >= centros.length); k++) {
-                int cx = baseX + centros[k];
-                int cy = baseY + centros[k];
-                int cz = baseZ + centros[k];
+                
+                            int cx = baseX + ((int[]) centros[k])[0];
+                int cy = baseY + ((int[]) centros[k])[1];
+                int cz = baseZ + ((int[]) centros[k])[2];
                 for (int dx = -6; !(dx > 6); dx++) {
                     for (int dz = -6; !(dz > 6); dz++) {
                         if (dx * dx + dz * dz <= 36) {
@@ -122,28 +123,29 @@ public class InfinityBallItem extends Item {
 
     public static void processarComando(ServerPlayer sp, String payload) {
         try {
-            String[] p = payload.split("\\|", 4);
-            String acao = p;
+            java.util.List p = java.util.Arrays.asList(payload.split("\\|", 4));
+            String acao = (String) p.get(0);
             if ("UNI".equals(acao)) {
-                criarUniversoPorTipo(sp, p);
+                criarUniversoPorTipo(sp, (String) p.get(1));
             } else if ("TP".equals(acao)) {
-                ServerPlayer alvo = sp.server.getPlayerList().getPlayerByName(p);
+                ServerPlayer alvo = sp.server.getPlayerList().getPlayerByName((String) p.get(1));
                 if (alvo != null) {
                     sp.teleportTo(alvo.serverLevel(), alvo.getX(), alvo.getY(), alvo.getZ(), alvo.getYRot(), alvo.getXRot());
                     sp.fallDistance = 0.0F;
                     sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("⚡ Teleportado para " + alvo.getGameProfile().getName() + "!"), true);
                 }
             } else if ("DIM".equals(acao)) {
-                ResourceKey key = "nether".equals(p) ? Level.NETHER : ("end".equals(p) ? Level.END : Level.OVERWORLD);
+                String d = (String) p.get(1);
+                ResourceKey key = "nether".equals(d) ? Level.NETHER : ("end".equals(d) ? Level.END : Level.OVERWORLD);
                 ServerLevel dest = sp.server.getLevel(key);
                 if (dest != null) {
                     sp.teleportTo(dest, 0.5, 100.0, 0.5, sp.getYRot(), sp.getXRot());
                     sp.fallDistance = 0.0F;
                 }
             } else if ("XYZ".equals(acao)) {
-                double x = Double.parseDouble(p);
-                double y = Double.parseDouble(p);
-                double z = Double.parseDouble(p);
+                double x = Double.parseDouble((String) p.get(1));
+                double y = Double.parseDouble((String) p.get(2));
+                double z = Double.parseDouble((String) p.get(3));
                 sp.teleportTo(sp.serverLevel(), x, y, z, sp.getYRot(), sp.getXRot());
                 sp.fallDistance = 0.0F;
             } else if ("SALVAR".equals(acao)) {
@@ -159,3 +161,5 @@ public class InfinityBallItem extends Item {
         } catch (Exception ignored) {}
     }
 }
+
+                
