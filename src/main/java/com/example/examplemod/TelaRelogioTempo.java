@@ -26,18 +26,25 @@ public class TelaRelogioTempo extends Screen {
     public static int travaHora = 0;
     public static int travaClima = 0;
 
-    public static boolean travaMinhaVida = false;
-    public static boolean travaMinhaFome = false;
-    public static boolean travaMinhasBolhas = false;
-    public static boolean autoAdaptarMods = true;
-    public static boolean travaVidaOutros = false;
-    public static boolean travaFomeOutros = false;
-    public static boolean travaBolhasOutros = false;
-    public static boolean travaPosOutros = false;
+    public static boolean imuneAnimais = false;
+    public static boolean imuneMonstros = false;
+    public static boolean imunePlayers = false;
 
-    private int aba = 0; // 0 = Geral, 1 = Hostis, 2 = Pacificos, 3 = Players, 4 = Status
+    private final UUID alvoIndividualUUID;
+    private final String alvoIndividualNome;
+
+    private int aba = 0; // 0 = Geral, 1 = Hostis, 2 = Pacificos, 3 = Players, 4 = Imunes
     private EditBox caixaVel;
     private EditBox caixaRaio;
+    private EditBox caixaVida;
+    private EditBox caixaFome;
+    private EditBox caixaBolhas;
+    private EditBox caixaAtrasoPercepcao;
+
+    private boolean indPararAnim = false;
+    private boolean indPararAtaque = false;
+    private int indHoraPercebida = 0; // 0 = normal, 1 = dia, 2 = noite
+
     private boolean todosServer = false;
     private int pagina = 0;
     private static final int POR_PAGINA = 5;
@@ -46,21 +53,28 @@ public class TelaRelogioTempo extends Screen {
     private final List nomes = new ArrayList();
     private final Set selecionados = new HashSet();
 
-    public TelaRelogioTempo() {
-        super(Component.literal("Cronometro Cosmico Supremo"));
+    public TelaRelogioTempo(UUID alvoUUID, String alvoNome) {
+        super(Component.literal(alvoUUID == null ? "Cronometro Cosmico Supremo" : "Controle Temporal: " + alvoNome));
+        this.alvoIndividualUUID = alvoUUID;
+        this.alvoIndividualNome = alvoNome;
     }
 
     public static void abrir() {
-        Minecraft.getInstance().setScreen(new TelaRelogioTempo());
+        Minecraft.getInstance().setScreen(new TelaRelogioTempo(null, null));
+    }
+
+    public static void abrirIndividual(Entity alvo) {
+        Minecraft.getInstance().setScreen(new TelaRelogioTempo(alvo.getUUID(), alvo.getName().getString()));
     }
 
     @Override
     protected void init() {
-        carregarLista();
+        if (alvoIndividualUUID == null) {
+            carregarLista();
+        }
         reconstruir();
     }
-
-    private void carregarLista() {
+        private void carregarLista() {
         opcoes.clear();
         nomes.clear();
         if (aba == 0 || aba == 4) return;
@@ -93,16 +107,78 @@ public class TelaRelogioTempo extends Screen {
             }
         }
     }
-        private void reconstruir() {
+
+    private void reconstruir() {
         this.clearWidgets();
         int cx = this.width / 2;
         int cy = this.height / 2;
 
-        this.addRenderableWidget(Button.builder(Component.literal(aba == 0 ? "§b[Geral]" : "Geral"), b -> { aba = 0; pagina = 0; reconstruir(); }).bounds(cx - 155, cy - 95, 58, 18).build());
+        if (alvoIndividualUUID != null) {
+            this.caixaVel = new EditBox(this.font, cx - 145, cy - 75, 80, 18, Component.literal("Vel"));
+            this.caixaVel.setValue("5.0");
+            this.addRenderableWidget(this.caixaVel);
+
+            this.addRenderableWidget(Button.builder(Component.literal("Aplicar Vel Alvo"), b -> {
+                enviar("IND_VEL|" + alvoIndividualUUID + "|" + caixaVel.getValue().trim().replace(",", "."));
+            }).bounds(cx - 60, cy - 76, 100, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("Congelar/Soltar"), b -> {
+                enviar("IND_TOGGLE|" + alvoIndividualUUID);
+            }).bounds(cx + 44, cy - 76, 105, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal(indPararAnim ? "§b[X] Parar Animacao" : "[ ] Parar Animacao"), b -> {
+                indPararAnim = !indPararAnim;
+                enviar("IND_FLAGS|" + alvoIndividualUUID + "|" + (indPararAnim ? "1" : "0") + "|" + (indPararAtaque ? "1" : "0") + "|" + indHoraPercebida);
+                reconstruir();
+            }).bounds(cx - 145, cy - 48, 142, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal(indPararAtaque ? "§c[X] Parar Ataques" : "[ ] Parar Ataques"), b -> {
+                indPararAtaque = !indPararAtaque;
+                enviar("IND_FLAGS|" + alvoIndividualUUID + "|" + (indPararAnim ? "1" : "0") + "|" + (indPararAtaque ? "1" : "0") + "|" + indHoraPercebida);
+                reconstruir();
+            }).bounds(cx + 3, cy - 48, 146, 20).build());
+
+            String txtHoraInd = indHoraPercebida == 1 ? "§ePercepcao: DIA" : (indHoraPercebida == 2 ? "§9Percepcao: NOITE" : "Percepcao: Normal");
+            this.addRenderableWidget(Button.builder(Component.literal(txtHoraInd), b -> {
+                indHoraPercebida = (indHoraPercebida + 1) % 3;
+                enviar("IND_FLAGS|" + alvoIndividualUUID + "|" + (indPararAnim ? "1" : "0") + "|" + (indPararAtaque ? "1" : "0") + "|" + indHoraPercebida);
+                reconstruir();
+            }).bounds(cx - 145, cy - 22, 142, 20).build());
+
+            this.caixaAtrasoPercepcao = new EditBox(this.font, cx + 3, cy - 21, 70, 18, Component.literal("Atraso"));
+            this.caixaAtrasoPercepcao.setHint(Component.literal("Atraso(s)"));
+            this.addRenderableWidget(this.caixaAtrasoPercepcao);
+
+            this.addRenderableWidget(Button.builder(Component.literal("Aplicar"), b -> {
+                enviar("IND_ATRASO|" + alvoIndividualUUID + "|" + caixaAtrasoPercepcao.getValue().trim().replace(",", "."));
+            }).bounds(cx + 77, cy - 22, 72, 20).build());
+
+            this.caixaVida = new EditBox(this.font, cx - 145, cy + 8, 92, 18, Component.literal("Vida"));
+            this.caixaVida.setHint(Component.literal("Vida (ex 20)"));
+            this.addRenderableWidget(this.caixaVida);
+
+            this.caixaFome = new EditBox(this.font, cx - 48, cy + 8, 92, 18, Component.literal("Fome"));
+            this.caixaFome.setHint(Component.literal("Fome (0-20)"));
+            this.addRenderableWidget(this.caixaFome);
+
+            this.caixaBolhas = new EditBox(this.font, cx + 49, cy + 8, 100, 18, Component.literal("Bolhas"));
+            this.caixaBolhas.setHint(Component.literal("Ar (0-300)"));
+            this.addRenderableWidget(this.caixaBolhas);
+
+            this.addRenderableWidget(Button.builder(Component.literal("§a§lAPLICAR VIDA / FOME / BOLHAS / MODS"), b -> {
+                String v = caixaVida.getValue().trim().isEmpty() ? "-" : caixaVida.getValue().trim().replace(",", ".");
+                String f = caixaFome.getValue().trim().isEmpty() ? "-" : caixaFome.getValue().trim();
+                String ar = caixaBolhas.getValue().trim().isEmpty() ? "-" : caixaBolhas.getValue().trim();
+                enviar("IND_STATS|" + alvoIndividualUUID + "|" + v + "|" + f + "|" + ar);
+                this.onClose();
+            }).bounds(cx - 145, cy + 34, 294, 22).build());
+            return;
+                }
+                this.addRenderableWidget(Button.builder(Component.literal(aba == 0 ? "§b[Geral]" : "Geral"), b -> { aba = 0; pagina = 0; reconstruir(); }).bounds(cx - 155, cy - 95, 58, 18).build());
         this.addRenderableWidget(Button.builder(Component.literal(aba == 1 ? "§c[Hostis]" : "Hostis"), b -> { aba = 1; pagina = 0; carregarLista(); reconstruir(); }).bounds(cx - 95, cy - 95, 58, 18).build());
         this.addRenderableWidget(Button.builder(Component.literal(aba == 2 ? "§a[Pacificos]" : "Pacificos"), b -> { aba = 2; pagina = 0; carregarLista(); reconstruir(); }).bounds(cx - 35, cy - 95, 64, 18).build());
         this.addRenderableWidget(Button.builder(Component.literal(aba == 3 ? "§d[Players]" : "Players"), b -> { aba = 3; pagina = 0; carregarLista(); reconstruir(); }).bounds(cx + 31, cy - 95, 60, 18).build());
-        this.addRenderableWidget(Button.builder(Component.literal(aba == 4 ? "§e[Status]" : "Status"), b -> { aba = 4; pagina = 0; reconstruir(); }).bounds(cx + 93, cy - 95, 62, 18).build());
+        this.addRenderableWidget(Button.builder(Component.literal(aba == 4 ? "§e[Imunes]" : "Imunes"), b -> { aba = 4; pagina = 0; reconstruir(); }).bounds(cx + 93, cy - 95, 62, 18).build());
 
         if (aba == 0) {
             this.caixaVel = new EditBox(this.font, cx - 145, cy - 66, 75, 18, Component.literal("Vel"));
@@ -124,7 +200,7 @@ public class TelaRelogioTempo extends Screen {
                 enviar("VEL|5.0|" + (imuneDono ? "1" : "0"));
             }).bounds(cx + 10, cy - 67, 68, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal(imuneDono ? "§aImune: SIM" : "§cImune: NAO"), b -> {
+            this.addRenderableWidget(Button.builder(Component.literal(imuneDono ? "§aVoce: IMUNE" : "§cVoce: AFETADO"), b -> {
                 imuneDono = !imuneDono;
                 enviar("VEL|" + velocidadeAtual + "|" + (imuneDono ? "1" : "0"));
                 reconstruir();
@@ -157,56 +233,28 @@ public class TelaRelogioTempo extends Screen {
                 this.onClose();
             }).bounds(cx - 150, cy + 32, 148, 22).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("§a§l▶ DESCONGELAR TUDO"), b -> enviar("UNFREEZE|ALL")).bounds(cx + 2, cy + 32, 148, 22).build());
-            
+            this.addRenderableWidget(Button.builder(Component.literal("§a§l▶ DESCONGELAR TUDO"), b -> {
+                enviar("UNFREEZE|ALL");
+                this.onClose();
+            }).bounds(cx + 2, cy + 32, 148, 22).build());
         } else if (aba == 4) {
-            this.addRenderableWidget(Button.builder(Component.literal(travaMinhaVida ? "§a[X] Minha Vida" : "[ ] Minha Vida"), b -> {
-                travaMinhaVida = !travaMinhaVida;
-                enviarStatus();
+            this.addRenderableWidget(Button.builder(Component.literal(imuneAnimais ? "§a[X] Animais Imunes" : "[ ] Animais Imunes"), b -> {
+                imuneAnimais = !imuneAnimais;
+                enviar("IMUNES|" + (imuneAnimais ? "1" : "0") + "|" + (imuneMonstros ? "1" : "0") + "|" + (imunePlayers ? "1" : "0"));
                 reconstruir();
-            }).bounds(cx - 145, cy - 68, 140, 19).build());
+            }).bounds(cx - 140, cy - 58, 280, 22).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal(travaMinhaFome ? "§a[X] Minha Fome" : "[ ] Minha Fome"), b -> {
-                travaMinhaFome = !travaMinhaFome;
-                enviarStatus();
+            this.addRenderableWidget(Button.builder(Component.literal(imuneMonstros ? "§c[X] Monstros Agressivos Imunes" : "[ ] Monstros Agressivos Imunes"), b -> {
+                imuneMonstros = !imuneMonstros;
+                enviar("IMUNES|" + (imuneAnimais ? "1" : "0") + "|" + (imuneMonstros ? "1" : "0") + "|" + (imunePlayers ? "1" : "0"));
                 reconstruir();
-            }).bounds(cx + 5, cy - 68, 140, 19).build());
+            }).bounds(cx - 140, cy - 30, 280, 22).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal(travaMinhasBolhas ? "§b[X] Minhas Bolhas" : "[ ] Minhas Bolhas"), b -> {
-                travaMinhasBolhas = !travaMinhasBolhas;
-                enviarStatus();
+            this.addRenderableWidget(Button.builder(Component.literal(imunePlayers ? "§d[X] Outros Players Imunes" : "[ ] Outros Players Imunes"), b -> {
+                imunePlayers = !imunePlayers;
+                enviar("IMUNES|" + (imuneAnimais ? "1" : "0") + "|" + (imuneMonstros ? "1" : "0") + "|" + (imunePlayers ? "1" : "0"));
                 reconstruir();
-            }).bounds(cx - 145, cy - 46, 140, 19).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal(autoAdaptarMods ? "§e[X] Auto-Adaptar Mods" : "[ ] Auto-Adaptar Mods"), b -> {
-                autoAdaptarMods = !autoAdaptarMods;
-                enviarStatus();
-                reconstruir();
-            }).bounds(cx + 5, cy - 46, 140, 19).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal(travaVidaOutros ? "§d[X] Vida Outros" : "[ ] Vida Outros"), b -> {
-                travaVidaOutros = !travaVidaOutros;
-                enviarStatus();
-                reconstruir();
-            }).bounds(cx - 145, cy - 20, 140, 19).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal(travaFomeOutros ? "§d[X] Fome Outros" : "[ ] Fome Outros"), b -> {
-                travaFomeOutros = !travaFomeOutros;
-                enviarStatus();
-                reconstruir();
-            }).bounds(cx + 5, cy - 20, 140, 19).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal(travaBolhasOutros ? "§b[X] Bolhas Outros" : "[ ] Bolhas Outros"), b -> {
-                travaBolhasOutros = !travaBolhasOutros;
-                enviarStatus();
-                reconstruir();
-            }).bounds(cx - 145, cy + 2, 140, 19).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal(travaPosOutros ? "§c[X] Posicao Outros" : "[ ] Posicao Outros"), b -> {
-                travaPosOutros = !travaPosOutros;
-                enviarStatus();
-                reconstruir();
-            }).bounds(cx + 5, cy + 2, 140, 19).build());
+            }).bounds(cx - 140, cy - 2, 280, 22).build());
         } else {
             this.caixaRaio = new EditBox(this.font, cx - 145, cy - 68, 85, 18, Component.literal("Raio"));
             this.caixaRaio.setHint(Component.literal("Raio (40)"));
@@ -253,10 +301,6 @@ public class TelaRelogioTempo extends Screen {
         }
     }
 
-    private void enviarStatus() {
-        enviar("STATUS|" + (travaMinhaVida ? "1" : "0") + "|" + (travaMinhaFome ? "1" : "0") + "|" + (travaMinhasBolhas ? "1" : "0") + "|" + (autoAdaptarMods ? "1" : "0") + "|" + (travaVidaOutros ? "1" : "0") + "|" + (travaFomeOutros ? "1" : "0") + "|" + (travaBolhasOutros ? "1" : "0") + "|" + (travaPosOutros ? "1" : "0"));
-    }
-
     private void enviar(String cmd) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
@@ -267,7 +311,7 @@ public class TelaRelogioTempo extends Screen {
     @Override
     public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gui);
-        gui.drawCenteredString(this.font, Component.literal("⏳ Cronometro Cosmico (Normal = 5.0) ⏳").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), this.width / 2, this.height / 2 - 112, 0xFFFFFF);
+        gui.drawCenteredString(this.font, this.title.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), this.width / 2, this.height / 2 - 112, 0xFFFFFF);
         super.render(gui, mouseX, mouseY, partialTick);
     }
 
@@ -275,4 +319,4 @@ public class TelaRelogioTempo extends Screen {
     public boolean isPauseScreen() {
         return false;
     }
-}
+                    }
