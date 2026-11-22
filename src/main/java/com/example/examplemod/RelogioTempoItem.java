@@ -1,6 +1,9 @@
 package com.example.examplemod;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -19,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -37,11 +41,14 @@ public class RelogioTempoItem extends Item {
     public static UUID donoUUID = null;
     public static int travaHora = 0;
     public static int travaClima = 0;
+    public static boolean pararTudoAtivo = false;
 
     public static final Set CONGELADOS_UUID = new HashSet();
-    public static final Set CONGELADOS_TIPOS = new HashSet();
     public static final Set CONGELADOS_PLAYERS = new HashSet();
     public static boolean congelarTodosPlayers = false;
+
+    private static final List GOTAS_CONGELADAS = new ArrayList();
+    private static boolean chovendoAntesDeParar = false;
 
     public RelogioTempoItem() {
         super(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
@@ -70,8 +77,7 @@ public class RelogioTempoItem extends Item {
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
-        
-            public static void processarComando(ServerPlayer sp, String payload) {
+        public static void processarComando(ServerPlayer sp, String payload) {
         try {
             donoUUID = sp.getUUID();
             String[] p = payload.split("\\|", 5);
@@ -92,15 +98,27 @@ public class RelogioTempoItem extends Item {
                 travaClima = Integer.parseInt(p[1]);
                 aplicarClima(sl, travaClima);
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("🌦 Clima atualizado!"), true);
+            } else if ("FREEZEALL".equals(acao)) {
+                pararTudoAtivo = true;
+                congelarTodosPlayers = true;
+                chovendoAntesDeParar = sl.isRaining();
+                if (chovendoAntesDeParar) {
+                    sl.setWeatherParameters(6000, 0, false, false);
+                }
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("⏸ TEMPO 100% PARADO (INCLUSIVE CHUVA NO AR)!"), true);
             } else if ("UNFREEZE".equals(acao)) {
+                pararTudoAtivo = false;
                 CONGELADOS_UUID.clear();
-                CONGELADOS_TIPOS.clear();
                 CONGELADOS_PLAYERS.clear();
                 congelarTodosPlayers = false;
+                if (chovendoAntesDeParar) {
+                    sl.setWeatherParameters(0, 6000, true, travaClima == 3);
+                    chovendoAntesDeParar = false;
+                }
                 for (Entity e : sl.getAllEntities()) {
                     if (e instanceof Mob m) m.setNoAi(false);
                 }
-                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("▶ Todos descongelados no tempo!"), true);
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("▶ Tempo e Chuva descongelados!"), true);
             } else if ("FREEZE".equals(acao)) {
                 int cat = Integer.parseInt(p[1]);
                 double raio = Double.parseDouble(p[2]);
@@ -125,7 +143,6 @@ public class RelogioTempoItem extends Item {
                     }
                 }
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("❄ Alvos selecionados congelados no tempo!"), true);
-                
             }
         } catch (Exception ignored) {}
     }
@@ -135,22 +152,21 @@ public class RelogioTempoItem extends Item {
         else if (tipo == 2) sl.setWeatherParameters(0, 6000, true, false);
         else if (tipo == 3) sl.setWeatherParameters(0, 6000, true, true);
     }
-
-    @SubscribeEvent
+        @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel sl)) return;
 
-        // Trava de dia/noite mantendo o relogio e ticks rodando livremente
-        if (travaHora == 1) {
-            long dia = sl.getDayTime() % 24000L;
-            if (dia > 11000L) sl.setDayTime(sl.getDayTime() - dia + 1000L);
-        } else if (travaHora == 2) {
-            long dia = sl.getDayTime() % 24000L;
-            if (dia < 13000L || dia > 23000L) sl.setDayTime(sl.getDayTime() - dia + 14000L);
-        }
-
-        if (travaClima > 0 && sl.getGameTime() % 40L == 0L) {
-            aplicarClima(sl, travaClima);
+        if (!pararTudoAtivo) {
+            if (travaHora == 1) {
+                long dia = sl.getDayTime() % 24000L;
+                if (dia > 11000L) sl.setDayTime(sl.getDayTime() - dia + 1000L);
+            } else if (travaHora == 2) {
+                long dia = sl.getDayTime() % 24000L;
+                if (dia < 13000L || dia > 23000L) sl.setDayTime(sl.getDayTime() - dia + 14000L);
+            }
+            if (travaClima > 0 && sl.getGameTime() % 40L == 0L) {
+                aplicarClima(sl, travaClima);
+            }
         }
 
         for (Entity e : sl.getAllEntities()) {
@@ -158,16 +174,19 @@ public class RelogioTempoItem extends Item {
             boolean ehDono = (donoUUID != null && e.getUUID().equals(donoUUID));
             if (ehDono) continue;
 
-            boolean congelado = CONGELADOS_UUID.contains(e.getUUID())
+            boolean congelado = pararTudoAtivo
+                    || CONGELADOS_UUID.contains(e.getUUID())
                     || (e instanceof Player && (congelarTodosPlayers || CONGELADOS_PLAYERS.contains(e.getUUID())));
 
             if (congelado) {
                 e.setDeltaMovement(Vec3.ZERO);
                 e.fallDistance = 0.0F;
+                e.setNoGravity(true);
                 if (e instanceof Mob m) m.setNoAi(true);
                 continue;
-            } else if (e instanceof Mob m && m.isNoAi()) {
-                m.setNoAi(false);
+            } else {
+                if (e.isNoGravity() && !(e instanceof Player)) e.setNoGravity(false);
+                if (e instanceof Mob m && m.isNoAi()) m.setNoAi(false);
             }
 
             if (velocidade != 5.0D && e instanceof LivingEntity vivo) {
@@ -183,8 +202,7 @@ public class RelogioTempoItem extends Item {
                     vivo.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 10, nivel, false, false));
                     vivo.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 10, nivel, false, false));
                     if (vivo instanceof Player pl) {
-                        float extraFome = (float) ((velocidade - 5.0D) * 0.035D);
-                        pl.causeFoodExhaustion(extraFome);
+                        pl.causeFoodExhaustion((float) ((velocidade - 5.0D) * 0.035D));
                     }
                 }
             }
@@ -207,6 +225,50 @@ public class RelogioTempoItem extends Item {
             int nivel = (int) Math.min(6, Math.round((5.0D - velocidade) * 1.4D));
             pl.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, nivel, false, false));
             pl.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 10, nivel, false, false));
+        }
+    }
+
+    @Mod.EventBusSubscriber(modid = ExampleMod.MODID, value = Dist.CLIENT)
+    public static class ClientChuvaTemporal {
+        private static final Random RAND = new Random();
+
+        @SubscribeEvent
+        public static void onClientTickChuva(TickEvent.ClientTickEvent event) {
+            if (event.phase != TickEvent.Phase.END) return;
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null || mc.player == null) return;
+
+            if (pararTudoAtivo) {
+                if (GOTAS_CONGELADAS.isEmpty()) {
+                    for (int i = 0; !(i >= 180); i++) {
+                        double gx = mc.player.getX() + (RAND.nextDouble() - 0.5) * 24.0;
+                        double gy = mc.player.getY() + RAND.nextDouble() * 14.0;
+                        double gz = mc.player.getZ() + (RAND.nextDouble() - 0.5) * 24.0;
+                        GOTAS_CONGELADAS.add(new Vec3(gx, gy, gz));
+                    }
+                }
+                if (mc.player.tickCount % 4 == 0) {
+                    for (Object obj : GOTAS_CONGELADAS) {
+                        Vec3 g = (Vec3) obj;
+                        mc.level.addParticle(ParticleTypes.DRIPPING_WATER, g.x, g.y, g.z, 0.0, 0.0, 0.0);
+                    }
+                }
+            } else {
+                if (!GOTAS_CONGELADAS.isEmpty()) GOTAS_CONGELADAS.clear();
+                if (mc.level.isRaining() && velocidade != 5.0D) {
+                    int extras = velocidade > 5.0D ? (int) Math.min(40, (velocidade - 5.0D) * 4) : 4;
+                    double velY = velocidade > 5.0D ? -1.8 : -0.08;
+                    for (int i = 0; !(i >= extras); i++) {
+                        double gx = mc.player.getX() + (RAND.nextDouble() - 0.5) * 22.0;
+                        double gy = mc.player.getY() + 6.0 + RAND.nextDouble() * 8.0;
+                        double gz = mc.player.getZ() + (RAND.nextDouble() - 0.5) * 22.0;
+                        BlockPos topo = mc.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, BlockPos.containing(gx, gy, gz));
+                        if (gy > topo.getY()) {
+                            mc.level.addParticle(ParticleTypes.FALLING_WATER, gx, gy, gz, 0.0, velY, 0.0);
+                        }
+                    }
+                }
+            }
         }
     }
 }
