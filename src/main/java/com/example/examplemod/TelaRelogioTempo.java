@@ -145,7 +145,13 @@ public class TelaRelogioTempo extends Screen {
                 reconstruir();
             }).bounds(cx + 56, cy - 5, 99, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("§a§lDESCONGELAR TODOS OS ALVOS"), b -> enviar("UNFREEZE|ALL")).bounds(cx - 110, cy + 32, 220, 22).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("§c§l⏸ PARAR TUDO (+CHUVA)"), b -> {
+                enviar("FREEZEALL|1");
+                this.onClose();
+            }).bounds(cx - 150, cy + 32, 148, 22).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("§a§l▶ DESCONGELAR TUDO"), b -> enviar("UNFREEZE|ALL")).bounds(cx + 2, cy + 32, 148, 22).build());
+            
         } else {
             this.caixaRaio = new EditBox(this.font, cx - 145, cy - 68, 85, 18, Component.literal("Raio"));
             this.caixaRaio.setHint(Component.literal("Raio (40)"));
