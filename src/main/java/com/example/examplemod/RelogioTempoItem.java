@@ -126,19 +126,6 @@ public class RelogioTempoItem extends Item {
                 }
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("❄ Alvos selecionados congelados no tempo!"), true);
                 
-                    for (Entity e : sl.getEntities(sp, sp.getBoundingBox().inflate(raio))) {
-                        if (e == sp || e instanceof ItemEntity) continue;
-                        if (cat == 3 && e instanceof Player pl && escolhas.contains(pl.getGameProfile().getName())) {
-                            CONGELADOS_PLAYERS.add(pl.getUUID());
-                        } else if (cat != 3 && !(e instanceof Player)) {
-                            ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(e.getType());
-                            if (id != null && escolhas.contains(id.toString())) {
-                                CONGELADOS_UUID.add(e.getUUID());
-                            }
-                        }
-                    }
-                }
-                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("❄ Alvos selecionados congelados no tempo!"), true);
             }
         } catch (Exception ignored) {}
     }
