@@ -70,25 +70,26 @@ public class RelogioTempoItem extends Item {
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
-        public static void processarComando(ServerPlayer sp, String payload) {
+        
+            public static void processarComando(ServerPlayer sp, String payload) {
         try {
             donoUUID = sp.getUUID();
             String[] p = payload.split("\\|", 5);
-            String acao = p;
+            String acao = p[0];
             ServerLevel sl = sp.serverLevel();
 
             if ("VEL".equals(acao)) {
-                velocidade = Double.parseDouble(p);
-                imuneDono = "1".equals(p);
+                velocidade = Double.parseDouble(p[1]);
+                imuneDono = "1".equals(p[2]);
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("⏳ Velocidade Temporal: " + velocidade + (imuneDono ? " (Você Imune)" : "")), true);
             } else if ("HORA".equals(acao)) {
-                sl.setDayTime(Long.parseLong(p));
+                sl.setDayTime(Long.parseLong(p[1]));
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("☀ Horário alterado!"), true);
             } else if ("TRAVAHORA".equals(acao)) {
-                travaHora = Integer.parseInt(p);
+                travaHora = Integer.parseInt(p[1]);
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante(travaHora == 1 ? "☀ Sempre Dia Ativado!" : (travaHora == 2 ? "🌙 Sempre Noite Ativado!" : "⏳ Horário Livre!")), true);
             } else if ("CLIMA".equals(acao)) {
-                travaClima = Integer.parseInt(p);
+                travaClima = Integer.parseInt(p[1]);
                 aplicarClima(sl, travaClima);
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("🌦 Clima atualizado!"), true);
             } else if ("UNFREEZE".equals(acao)) {
@@ -101,16 +102,30 @@ public class RelogioTempoItem extends Item {
                 }
                 sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("▶ Todos descongelados no tempo!"), true);
             } else if ("FREEZE".equals(acao)) {
-                int cat = Integer.parseInt(p);
-                double raio = Double.parseDouble(p);
-                boolean todosSrv = "1".equals(p);
+                int cat = Integer.parseInt(p[1]);
+                double raio = Double.parseDouble(p[2]);
+                boolean todosSrv = "1".equals(p[3]);
                 Set escolhas = new HashSet();
-                if (p.length > 4 && !p.isEmpty()) {
-                    escolhas.addAll(Arrays.asList(p.split(",")));
+                if (p.length > 4 && !p[4].isEmpty()) {
+                    escolhas.addAll(Arrays.asList(p[4].split(",")));
                 }
                 if (cat == 3 && todosSrv) {
                     congelarTodosPlayers = true;
                 } else {
+                    for (Entity e : sl.getEntities(sp, sp.getBoundingBox().inflate(raio))) {
+                        if (e == sp || e instanceof ItemEntity) continue;
+                        if (cat == 3 && e instanceof Player pl && escolhas.contains(pl.getGameProfile().getName())) {
+                            CONGELADOS_PLAYERS.add(pl.getUUID());
+                        } else if (cat != 3 && !(e instanceof Player)) {
+                            ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(e.getType());
+                            if (id != null && escolhas.contains(id.toString())) {
+                                CONGELADOS_UUID.add(e.getUUID());
+                            }
+                        }
+                    }
+                }
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("❄ Alvos selecionados congelados no tempo!"), true);
+                
                     for (Entity e : sl.getEntities(sp, sp.getBoundingBox().inflate(raio))) {
                         if (e == sp || e instanceof ItemEntity) continue;
                         if (cat == 3 && e instanceof Player pl && escolhas.contains(pl.getGameProfile().getName())) {
