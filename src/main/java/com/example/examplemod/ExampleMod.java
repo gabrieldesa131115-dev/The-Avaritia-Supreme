@@ -191,6 +191,17 @@ public class ExampleMod {
                     })
                 )
         );
+        event.getDispatcher().register(
+            Commands.literal("infinitymenu")
+                .then(Commands.argument("dados", StringArgumentType.greedyString())
+                    .executes(ctx -> {
+                        if (ctx.getSource().getEntity() instanceof ServerPlayer sp) {
+                            InfinityBallItem.processarComando(sp, StringArgumentType.getString(ctx, "dados"));
+                        }
+                        return 1;
+                    })
+                )
+        );
         
     }
     }
