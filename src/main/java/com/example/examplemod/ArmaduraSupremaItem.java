@@ -103,7 +103,6 @@ public class ArmaduraSupremaItem extends ArmorItem {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
         }
 
-        // Modo 5: Teleporte da Calca ao clicar com botao direito no ar
         if (modo == 4 && this.type == Type.LEGGINGS) {
             if (!level.isClientSide() && level instanceof ServerLevel sl) {
                 double dist = isIrrelevante ? 60.0D : 30.0D;
@@ -120,7 +119,7 @@ public class ArmaduraSupremaItem extends ArmorItem {
 
         return super.use(level, player, hand);
     }
-        public static void sincronizarModo(Player player, int novoModo) {
+       public static void sincronizarModo(Player player, int novoModo) {
         for (ItemStack armor : player.getArmorSlots()) {
             if (armor.getItem() instanceof ArmaduraSupremaItem) {
                 armor.getOrCreateTag().putInt("ModoArmadura", novoModo);
@@ -170,7 +169,6 @@ public class ArmaduraSupremaItem extends ArmorItem {
         if (event.phase != TickEvent.Phase.END) return;
         Player p = event.player;
 
-        // Voo exclusivo do Peitoral Supremo
         boolean temPeitoral = p.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof ArmaduraSupremaItem;
         if (temPeitoral) {
             if (!p.getAbilities().mayfly) {
@@ -189,18 +187,15 @@ public class ArmaduraSupremaItem extends ArmorItem {
             return;
         }
 
-        // Modo 1 (0): Atravessar blocos livremente + visao de espectador
         if (modo == 0) {
             p.noPhysics = true;
-            p.setOnGround(false);
-            if (temPeitoral) p.getAbilities().flying = true;
+            if (p.getAbilities().flying) p.setOnGround(false);
         } else if (modo == 1) {
-            // Modo 2 (1): Atravessa paredes e teto, mas mantem chao solido (e nao cai agachado!)
             BlockPos abaixo = BlockPos.containing(p.getX(), p.getY() - 0.15, p.getZ());
             boolean temChao = !p.level().getBlockState(abaixo).isAir();
             if (temChao || p.isShiftKeyDown()) {
                 p.noPhysics = false;
-                if (p.isShiftKeyDown() && p.getDeltaMovement().y < 0) {
+                if (p.isShiftKeyDown() && !(p.getDeltaMovement().y >= 0)) {
                     Vec3 v = p.getDeltaMovement();
                     p.setDeltaMovement(v.x, 0.0, v.z);
                     p.fallDistance = 0.0F;
@@ -225,7 +220,6 @@ public class ArmaduraSupremaItem extends ArmorItem {
             p.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get()).setBaseValue(1.5D);
         }
 
-        // Modo 6 (5): Invisibilidade Real
         if (modo == 5) {
             p.setInvisible(true);
             p.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 40, 0, false, false));
@@ -233,12 +227,11 @@ public class ArmaduraSupremaItem extends ArmorItem {
             p.setInvisible(false);
         }
 
-        // Modo 3 (2): Escudo que lanca pra longe todo mundo sem causar dano
         if (modo == 2 && p.level() instanceof ServerLevel sl) {
             for (Entity e : sl.getEntities(p, p.getBoundingBox().inflate(7.0D))) {
                 if (e != p && !(e instanceof ItemEntity)) {
                     Vec3 empurrao = e.position().subtract(p.position());
-                    if (empurrao.lengthSqr() < 0.01) empurrao = new Vec3(1, 0, 0);
+                    if (!(empurrao.lengthSqr() >= 0.01)) empurrao = new Vec3(1, 0, 0);
                     empurrao = empurrao.normalize().scale(3.5D);
                     e.setDeltaMovement(empurrao.x, 0.9D, empurrao.z);
                     e.hurtMarked = true;
@@ -246,7 +239,6 @@ public class ArmaduraSupremaItem extends ArmorItem {
             }
         }
 
-        // Modo 4 (3): Animacao de Blip quando chegam perto
         if (modo == 3 && p.level() instanceof ServerLevel sl && p.tickCount % 15 == 0) {
             for (Entity e : sl.getEntities(p, p.getBoundingBox().inflate(3.5D))) {
                 if (e != p && !(e instanceof ItemEntity) && e instanceof net.minecraft.world.entity.LivingEntity) {
@@ -287,4 +279,4 @@ public class ArmaduraSupremaItem extends ArmorItem {
             }
         }
     }
-}
+                        }
