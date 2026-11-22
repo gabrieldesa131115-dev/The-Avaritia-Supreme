@@ -1,29 +1,47 @@
 package com.example.examplemod;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
 
+@Mod.EventBusSubscriber(modid = ExampleMod.MODID)
 public class RelogioTempoItem extends Item {
-    public static boolean TEMPO_GLOBAL_PARADO = false;
-    public static final Set<UUID> ENTIDADES_CONGELADAS = new HashSet<>();
-    public static final Map<UUID, Vec3> POSICAO_ANTERIOR = new HashMap<>();
-    public static final Map<UUID, UUID> ALVO_SELECIONADO = new HashMap<>();
+    public static double velocidade = 5.0D;
+    public static boolean imuneDono = true;
+    public static UUID donoUUID = null;
+    public static int travaHora = 0;
+    public static int travaClima = 0;
+
+    public static final Set CONGELADOS_UUID = new HashSet();
+    public static final Set CONGELADOS_TIPOS = new HashSet();
+    public static final Set CONGELADOS_PLAYERS = new HashSet();
+    public static boolean congelarTodosPlayers = false;
 
     public RelogioTempoItem() {
         super(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC));
@@ -33,79 +51,160 @@ public class RelogioTempoItem extends Item {
 
     @Override
     public Component getName(ItemStack stack) {
-        return Component.literal("⏳ Cronômetro da Eternidade Absoluta ⏳").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        return VisualEAdaptacao.textoBrilhante("⏳ Cronômetro do Tempo Absoluto ⏳");
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        int cat = stack.getOrCreateTag().getInt("CategoriaRelogio");
-        String[] nomes = {"1: Clima & Tempo Mundial", "2: Parada Total do Tempo", "3: Controle Individual (Bater no Alvo)"};
-        tooltip.add(Component.literal("Categoria Atual: " + nomes[cat]).withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
-        tooltip.add(Component.literal("[Clique Direito] Abrir Menu Temporal").withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.literal("[Shift + Clique Direito] Trocar Categoria").withStyle(ChatFormatting.GRAY));
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List tooltip, TooltipFlag flag) {
+        tooltip.add(Component.literal("Velocidade Atual: " + velocidade + " (Normal: 5.0)").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+        tooltip.add(Component.literal("• [Clique Direito] Abrir Painel de Controle Temporal").withStyle(ChatFormatting.YELLOW));
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide() && player instanceof ServerPlayer sp) {
-            int cat = stack.getOrCreateTag().getInt("CategoriaRelogio");
-            if (sp.isShiftKeyDown()) {
-                cat = (cat + 1) % 3;
-                stack.getOrCreateTag().putInt("CategoriaRelogio", cat);
-                level.playSound(null, sp.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.5F);
-            }
-            abrirMenuCategoria(sp, cat);
+        if (level.isClientSide()) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> TelaRelogioTempo::abrir);
+        } else {
+            donoUUID = player.getUUID();
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
+        public static void processarComando(ServerPlayer sp, String payload) {
+        try {
+            donoUUID = sp.getUUID();
+            String[] p = payload.split("\\|", 5);
+            String acao = p;
+            ServerLevel sl = sp.serverLevel();
 
-    public static void abrirMenuCategoria(ServerPlayer sp, int cat) {
-        sp.sendSystemMessage(Component.literal("══════ ⏳ CONTROLE TEMPORAL ⏳ ══════").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
-        sp.sendSystemMessage(btn("[ 1. Clima/Tempo ]", "/relogio cat 0", cat == 0 ? ChatFormatting.GREEN : ChatFormatting.GRAY)
-                .append(btn("  [ 2. Parar Tudo ]", "/relogio cat 1", cat == 1 ? ChatFormatting.RED : ChatFormatting.GRAY))
-                .append(btn("  [ 3. Alvo Único ]", "/relogio cat 2", cat == 2 ? ChatFormatting.AQUA : ChatFormatting.GRAY)));
+            if ("VEL".equals(acao)) {
+                velocidade = Double.parseDouble(p);
+                imuneDono = "1".equals(p);
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("⏳ Velocidade Temporal: " + velocidade + (imuneDono ? " (Você Imune)" : "")), true);
+            } else if ("HORA".equals(acao)) {
+                sl.setDayTime(Long.parseLong(p));
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("☀ Horário alterado!"), true);
+            } else if ("TRAVAHORA".equals(acao)) {
+                travaHora = Integer.parseInt(p);
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante(travaHora == 1 ? "☀ Sempre Dia Ativado!" : (travaHora == 2 ? "🌙 Sempre Noite Ativado!" : "⏳ Horário Livre!")), true);
+            } else if ("CLIMA".equals(acao)) {
+                travaClima = Integer.parseInt(p);
+                aplicarClima(sl, travaClima);
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("🌦 Clima atualizado!"), true);
+            } else if ("UNFREEZE".equals(acao)) {
+                CONGELADOS_UUID.clear();
+                CONGELADOS_TIPOS.clear();
+                CONGELADOS_PLAYERS.clear();
+                congelarTodosPlayers = false;
+                for (Entity e : sl.getAllEntities()) {
+                    if (e instanceof Mob m) m.setNoAi(false);
+                }
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("▶ Todos descongelados no tempo!"), true);
+            } else if ("FREEZE".equals(acao)) {
+                int cat = Integer.parseInt(p);
+                double raio = Double.parseDouble(p);
+                boolean todosSrv = "1".equals(p);
+                Set escolhas = new HashSet();
+                if (p.length > 4 && !p.isEmpty()) {
+                    escolhas.addAll(Arrays.asList(p.split(",")));
+                }
+                if (cat == 3 && todosSrv) {
+                    congelarTodosPlayers = true;
+                } else {
+                    for (Entity e : sl.getEntities(sp, sp.getBoundingBox().inflate(raio))) {
+                        if (e == sp || e instanceof ItemEntity) continue;
+                        if (cat == 3 && e instanceof Player pl && escolhas.contains(pl.getGameProfile().getName())) {
+                            CONGELADOS_PLAYERS.add(pl.getUUID());
+                        } else if (cat != 3 && !(e instanceof Player)) {
+                            ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(e.getType());
+                            if (id != null && escolhas.contains(id.toString())) {
+                                CONGELADOS_UUID.add(e.getUUID());
+                            }
+                        }
+                    }
+                }
+                sp.displayClientMessage(VisualEAdaptacao.textoBrilhante("❄ Alvos selecionados congelados no tempo!"), true);
+            }
+        } catch (Exception ignored) {}
+    }
 
-        if (cat == 0) {
-            sp.sendSystemMessage(btn("[ ☀ Dia ]", "/relogio hora 1000", ChatFormatting.YELLOW)
-                    .append(btn(" [ 🌤 Meio-Dia ]", "/relogio hora 6000", ChatFormatting.GOLD))
-                    .append(btn(" [ 🌇 Tarde ]", "/relogio hora 12500", ChatFormatting.RED))
-                    .append(btn(" [ 🌙 Noite ]", "/relogio hora 18000", ChatFormatting.DARK_PURPLE)));
-            sp.sendSystemMessage(btn("[ +500 Ticks ]", "/relogio add 500", ChatFormatting.AQUA)
-                    .append(btn(" [ +1000 Ticks ]", "/relogio add 1000", ChatFormatting.AQUA))
-                    .append(btn(" [ +5000 Ticks ]", "/relogio add 5000", ChatFormatting.AQUA)));
-            sp.sendSystemMessage(btn("[ 🌈 Limpo ]", "/relogio clima limpo", ChatFormatting.GREEN)
-                    .append(btn(" [ 🌧 Chuva ]", "/relogio clima chuva", ChatFormatting.BLUE))
-                    .append(btn(" [ ⛈ Tempestade ]", "/relogio clima tempestade", ChatFormatting.DARK_RED)));
-        } else if (cat == 1) {
-            sp.sendSystemMessage(btn(TEMPO_GLOBAL_PARADO ? "[ ▶ RETOMAR O TEMPO GLOBAL ]" : "[ ⏸ PARAR TUDO AGORA (ZA WARUDO) ]",
-                    "/relogio global", TEMPO_GLOBAL_PARADO ? ChatFormatting.GREEN : ChatFormatting.RED));
-            sp.sendSystemMessage(btn("[ ⏭ Avançar +20 Ticks no Tempo Parado ]", "/relogio add 20", ChatFormatting.YELLOW));
-        } else {
-            UUID alvoId = ALVO_SELECIONADO.get(sp.getUUID());
-            if (alvoId == null) {
-                sp.sendSystemMessage(Component.literal("Bata em qualquer entidade, flecha ou item para travar e controlar!").withStyle(ChatFormatting.YELLOW));
-            } else {
-                sp.sendSystemMessage(btn("[ ⏸ Congelar/Soltar Alvo ]", "/relogio alvo toggle", ChatFormatting.AQUA)
-                        .append(btn(" [ ⏪ Voltar Posição ]", "/relogio alvo voltar", ChatFormatting.GOLD))
-                        .append(btn(" [ 💥 Apagar Alvo ]", "/relogio alvo apagar", ChatFormatting.DARK_RED)));
+    private static void aplicarClima(ServerLevel sl, int tipo) {
+        if (tipo == 1) sl.setWeatherParameters(6000, 0, false, false);
+        else if (tipo == 2) sl.setWeatherParameters(0, 6000, true, false);
+        else if (tipo == 3) sl.setWeatherParameters(0, 6000, true, true);
+    }
+
+    @SubscribeEvent
+    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel sl)) return;
+
+        // Trava de dia/noite mantendo o relogio e ticks rodando livremente
+        if (travaHora == 1) {
+            long dia = sl.getDayTime() % 24000L;
+            if (dia > 11000L) sl.setDayTime(sl.getDayTime() - dia + 1000L);
+        } else if (travaHora == 2) {
+            long dia = sl.getDayTime() % 24000L;
+            if (dia < 13000L || dia > 23000L) sl.setDayTime(sl.getDayTime() - dia + 14000L);
+        }
+
+        if (travaClima > 0 && sl.getGameTime() % 40L == 0L) {
+            aplicarClima(sl, travaClima);
+        }
+
+        for (Entity e : sl.getAllEntities()) {
+            if (e instanceof ItemEntity) continue;
+            boolean ehDono = (donoUUID != null && e.getUUID().equals(donoUUID));
+            if (ehDono) continue;
+
+            boolean congelado = CONGELADOS_UUID.contains(e.getUUID())
+                    || (e instanceof Player && (congelarTodosPlayers || CONGELADOS_PLAYERS.contains(e.getUUID())));
+
+            if (congelado) {
+                e.setDeltaMovement(Vec3.ZERO);
+                e.fallDistance = 0.0F;
+                if (e instanceof Mob m) m.setNoAi(true);
+                continue;
+            } else if (e instanceof Mob m && m.isNoAi()) {
+                m.setNoAi(false);
+            }
+
+            if (velocidade != 5.0D && e instanceof LivingEntity vivo) {
+                if (velocidade < 5.0D) {
+                    int nivel = (int) Math.min(6, Math.round((5.0D - velocidade) * 1.4D));
+                    vivo.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, nivel, false, false));
+                    vivo.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 10, nivel, false, false));
+                    double fator = Math.max(0.05D, velocidade / 5.0D);
+                    Vec3 v = vivo.getDeltaMovement();
+                    vivo.setDeltaMovement(v.x * fator, v.y, v.z * fator);
+                } else {
+                    int nivel = (int) Math.min(10, Math.round((velocidade - 5.0D) * 0.8D));
+                    vivo.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 10, nivel, false, false));
+                    vivo.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 10, nivel, false, false));
+                    if (vivo instanceof Player pl) {
+                        float extraFome = (float) ((velocidade - 5.0D) * 0.035D);
+                        pl.causeFoodExhaustion(extraFome);
+                    }
+                }
             }
         }
-        sp.sendSystemMessage(Component.literal("══════════════════════════════════").withStyle(ChatFormatting.GOLD));
     }
 
-    public static void congelarInstantaneo(Entity target, ServerPlayer player) {
-        POSICAO_ANTERIOR.putIfAbsent(target.getUUID(), target.position());
-        ENTIDADES_CONGELADAS.add(target.getUUID());
-        ALVO_SELECIONADO.put(player.getUUID(), target.getUUID());
-        target.setDeltaMovement(Vec3.ZERO);
-        target.setNoGravity(true);
-        if (target instanceof Mob mob) mob.setNoAi(true);
-        abrirMenuCategoria(player, 2);
-    }
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) return;
+        Player pl = event.player;
+        boolean ehDono = (donoUUID != null && pl.getUUID().equals(donoUUID));
+        if (ehDono && imuneDono) return;
 
-    private static MutableComponent btn(String texto, String cmd, ChatFormatting cor) {
-        return Component.literal(texto).withStyle(s -> s.withColor(cor).withBold(true)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd)));
+        if (velocidade > 5.0D) {
+            int nivel = (int) Math.min(10, Math.round((velocidade - 5.0D) * 0.8D));
+            pl.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 10, nivel, false, false));
+            pl.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 10, nivel, false, false));
+            pl.causeFoodExhaustion((float) ((velocidade - 5.0D) * 0.035D));
+        } else if (velocidade < 5.0D) {
+            int nivel = (int) Math.min(6, Math.round((5.0D - velocidade) * 1.4D));
+            pl.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, nivel, false, false));
+            pl.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 10, nivel, false, false));
+        }
     }
-  }
+}
