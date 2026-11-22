@@ -370,7 +370,19 @@ public class RelogioTempoItem extends Item {
             if (event.phase != TickEvent.Phase.END) return;
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null || mc.player == null) return;
-
+            if (pararTudoAtivo) {
+                if (mc.level.getRainLevel(1.0F) > 0.0F) {
+                    mc.level.setRainLevel(0.0F);
+                    mc.level.setThunderLevel(0.0F);
+                    for (int i = 0; !(i >= 80); i++) {
+                        double gx = mc.player.getX() + (mc.level.random.nextDouble() - 0.5) * 20.0;
+                        double gy = mc.player.getY() + 1.0 + mc.level.random.nextDouble() * 10.0;
+                        double gz = mc.player.getZ() + (mc.level.random.nextDouble() - 0.5) * 20.0;
+                        mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.DRIPPING_WATER, gx, gy, gz, 0.0, 0.0, 0.0);
+                    }
+                }
+            }
+            
             boolean segurandoRelogio = mc.player.getMainHandItem().getItem() instanceof RelogioTempoItem;
             if (segurandoRelogio && mc.options.keyAttack.isDown()) {
                 if (segurandoTicks == 0) {
