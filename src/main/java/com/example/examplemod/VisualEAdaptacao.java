@@ -195,4 +195,55 @@ public class VisualEAdaptacao {
             }
         }
     }
+    private static final java.util.Map BACKUP_INVENTARIO = new java.util.HashMap();
+
+    @SubscribeEvent
+    public void onPlayerTickProtecaoClear(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || event.player.level().isClientSide()) return;
+        net.minecraft.world.entity.player.Player p = event.player;
+        java.util.List atuais = new java.util.ArrayList();
+        for (int i = 0; !(i >= p.getInventory().getContainerSize()); i++) {
+            net.minecraft.world.item.ItemStack st = p.getInventory().getItem(i);
+            if (!st.isEmpty() && ehItemDoMod(st.getItem())) {
+                atuais.add(st.copy());
+            }
+        }
+        java.util.List antes = (java.util.List) BACKUP_INVENTARIO.get(p.getUUID());
+        if (!atuais.isEmpty()) {
+            BACKUP_INVENTARIO.put(p.getUUID(), atuais);
+        } else if (antes != null && !antes.isEmpty() && p.isAlive()) {
+            for (Object obj : antes) {
+                net.minecraft.world.item.ItemStack restaurar = ((net.minecraft.world.item.ItemStack) obj).copy();
+                p.getInventory().add(restaurar);
+            }
+            BACKUP_INVENTARIO.remove(p.getUUID());
+            p.displayClientMessage(textoBrilhante("✦ Seus itens supremos resistiram ao /clear! ✦"), true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onBreakBlockSupremo(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+        net.minecraft.world.entity.player.Player p = event.getPlayer();
+        if (p == null || p.level().isClientSide()) return;
+        net.minecraft.world.item.ItemStack mao = p.getMainHandItem();
+        if (!ehItemDoMod(mao.getItem())) return;
+
+        if (!(mao.getEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.BLOCK_EFFICIENCY) >= 10)) {
+            mao.enchant(net.minecraft.world.item.enchantment.Enchantments.BLOCK_EFFICIENCY, 10);
+        }
+        int encModo = mao.getOrCreateTag().getInt("ModoEncanto");
+        if (encModo == 1) {
+            if (mao.getEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH) == 0) {
+                mao.getEnchantmentTags().clear();
+                mao.enchant(net.minecraft.world.item.enchantment.Enchantments.BLOCK_EFFICIENCY, 10);
+                mao.enchant(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH, 1);
+            }
+        } else {
+            if (!(mao.getEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.BLOCK_FORTUNE) >= 10)) {
+                mao.getEnchantmentTags().clear();
+                mao.enchant(net.minecraft.world.item.enchantment.Enchantments.BLOCK_EFFICIENCY, 10);
+                mao.enchant(net.minecraft.world.item.enchantment.Enchantments.BLOCK_FORTUNE, 10);
+            }
+        }
+    }
 }
